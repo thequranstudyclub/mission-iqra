@@ -1,10 +1,9 @@
-// POST /api/draw — draw one envelope from the shared pool.
-// Randomness is client-agnostic here (server generates r); selection is atomic
-// in Redis. Returns { claimId, mission, remaining }. The client stores claimId
-// so a reload reuses this draw and the return fail-safe can target it.
+// POST /api/draw { group } — claim a group name and draw one envelope.
+// The draw is keyed by group name + server date and is atomic: a name that's
+// already taken returns 409 group_name_in_use. Returns { mission, remaining }.
 
-import { randomUUID } from "node:crypto";
-import { drawMission } from "../lib/pool.js";
+import { drawMission, today } from "../lib/pool.js";
+import { readJsonBody } from "./_body.js";
 
 export default async function handler(req, res) {
   if (req.method !== "POST") {
@@ -12,11 +11,24 @@ export default async function handler(req, res) {
     res.status(405).json({ error: "method_not_allowed" });
     return;
   }
+  const body = readJsonBody(req);
+  const group = (body.group || "").trim();
+  if (!group) {
+    res.status(400).json({ error: "group_required" });
+    return;
+  }
+  if (group.length > 50) {
+    res.status(400).json({ error: "group_too_long" });
+    return;
+  }
   try {
-    const claimId = randomUUID();
     const r = Math.random();
-    const { mission, remaining } = await drawMission({ r, claimId });
-    res.status(200).json({ claimId, mission, remaining });
+    const result = await drawMission({ r, group, date: today() });
+    if (result.inUse) {
+      res.status(409).json({ error: "group_name_in_use" });
+      return;
+    }
+    res.status(200).json({ mission: result.mission, remaining: result.remaining });
   } catch (err) {
     console.error("draw failed:", err);
     res.status(500).json({ error: "draw_failed" });

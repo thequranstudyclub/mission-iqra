@@ -1,0 +1,247 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>Operation Iqra — Admin</title>
+<style>
+  @font-face{ font-family:'RocaTwo'; font-weight:700; font-display:swap; src:url('./fonts/RocaTwo-Bold.ttf') format('truetype'); }
+  :root{ --bg:#717b5e; --bg2:#2E3326; --ink:#F9F9F6; --sage:#acb59a; --tan:#ab875f; --cream:#ffead1; --kraft:#4A3728; }
+  *{box-sizing:border-box; margin:0; padding:0}
+  body{ min-height:100dvh; background:radial-gradient(120% 90% at 50% 0%, #7d876a 0%, var(--bg) 45%, var(--bg2) 100%);
+    color:var(--ink); font-family:'Inter',system-ui,-apple-system,'Segoe UI',sans-serif; padding:24px; }
+  .serif{font-family:'RocaTwo',Georgia,serif; font-weight:700}
+  .wrap{max-width:960px; margin:0 auto}
+  .btn{font-family:inherit; font-weight:700; font-size:14px; padding:11px 16px; border-radius:11px; border:none; cursor:pointer}
+  .btn-primary{background:var(--tan); color:#2a1d12}
+  .btn-primary:disabled{opacity:.5; cursor:default}
+  .btn-ghost{background:transparent; color:var(--ink); border:1.5px solid var(--sage)}
+  .btn-danger{background:#8f3322; color:var(--cream)}
+  .errline{font-size:13px; color:#f0c9b0; min-height:1em}
+
+  /* login */
+  #login{max-width:340px; margin:14vh auto 0; display:flex; flex-direction:column; gap:14px; align-items:stretch; text-align:center}
+  #login h1{font-size:22px}
+  #login .sub{font-size:12px; letter-spacing:2px; text-transform:uppercase; color:var(--sage)}
+  #pw{font-family:inherit; font-size:16px; color:var(--ink); text-align:center; background:rgba(255,255,255,.08);
+    border:1.5px solid var(--sage); border-radius:12px; padding:14px}
+  #pw:focus{outline:none; border-color:var(--cream)}
+
+  /* dashboard */
+  #dash{display:none}
+  .head{display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap; margin-bottom:18px}
+  .head h1{font-size:22px}
+  .head .sub{font-size:11px; letter-spacing:2px; text-transform:uppercase; color:var(--sage)}
+  .head-actions{display:flex; gap:10px}
+  .filters{display:flex; gap:12px; align-items:flex-end; flex-wrap:wrap; margin-bottom:20px;
+    background:rgba(255,255,255,.06); border:1px solid rgba(172,181,154,.35); border-radius:14px; padding:14px 16px}
+  .filters .fld{display:flex; flex-direction:column; gap:5px}
+  .filters label{font-size:11px; letter-spacing:1px; text-transform:uppercase; color:var(--sage)}
+  .filters input{font-family:inherit; font-size:14px; color:var(--ink); background:rgba(255,255,255,.08);
+    border:1.5px solid var(--sage); border-radius:9px; padding:9px 11px}
+  .filters input:focus{outline:none; border-color:var(--cream)}
+  .count{font-size:13px; color:var(--sage); margin-left:auto}
+
+  .grid{display:grid; grid-template-columns:repeat(auto-fill, minmax(180px,1fr)); gap:16px}
+  .env-tile{position:relative; aspect-ratio:3/2; border-radius:10px; cursor:pointer; border:none;
+    background:linear-gradient(160deg,#5a4433,var(--kraft)); box-shadow:0 10px 24px rgba(0,0,0,.3);
+    display:flex; flex-direction:column; align-items:center; justify-content:center; gap:6px; padding:12px; text-align:center;
+    transition:transform .18s ease}
+  .env-tile:hover{transform:translateY(-3px)}
+  .env-tile::before{content:""; position:absolute; top:0; left:0; width:100%; height:52%;
+    background:linear-gradient(160deg,#6b5137,#3d2e21); clip-path:polygon(0 0,100% 0,50% 100%); border-radius:10px 10px 0 0}
+  .env-tile .gname{position:relative; z-index:1; color:var(--cream); font-weight:700; font-size:15px; word-break:break-word; margin-top:16%}
+  .env-tile .gtime{position:relative; z-index:1; color:var(--sage); font-size:11px}
+  .empty{color:var(--sage); font-size:14px; padding:30px 0; text-align:center}
+
+  /* modal */
+  #overlay{display:none; position:fixed; inset:0; background:rgba(20,22,16,.72); z-index:50;
+    align-items:center; justify-content:center; padding:24px}
+  #overlay.on{display:flex}
+  .modal{width:100%; max-width:480px; max-height:86vh; overflow:auto; background:var(--cream); color:var(--kraft);
+    border-radius:18px; padding:26px 24px; box-shadow:0 30px 70px rgba(0,0,0,.5)}
+  .modal .m-group{font-size:22px; margin-bottom:2px}
+  .modal .m-meta{font-size:12px; color:var(--tan); font-weight:600; margin-bottom:18px}
+  .modal .m-field{margin-bottom:16px}
+  .modal .m-field h3{font-size:12px; letter-spacing:1px; text-transform:uppercase; color:var(--tan); margin-bottom:4px}
+  .modal .m-field p{font-size:15px; line-height:1.55; color:#3a2b1e; white-space:pre-wrap; word-break:break-word}
+  .modal .m-field p.blank{color:#a98a6b; font-style:italic}
+</style>
+</head>
+<body>
+  <div class="wrap">
+    <!-- login -->
+    <div id="login">
+      <div class="sub">QSC × HIMMAH · Operation Iqra</div>
+      <h1 class="serif">Admin Console</h1>
+      <input id="pw" type="password" placeholder="Password" autocomplete="current-password" />
+      <button class="btn btn-primary" id="loginBtn">Enter</button>
+      <div class="errline" id="loginErr"></div>
+    </div>
+
+    <!-- dashboard -->
+    <div id="dash">
+      <div class="head">
+        <div>
+          <div class="sub">QSC × HIMMAH · Operation Iqra</div>
+          <h1 class="serif">Report Summaries</h1>
+        </div>
+        <div class="head-actions">
+          <button class="btn btn-ghost" id="refreshBtn">Refresh</button>
+          <button class="btn btn-danger" id="resetBtn">Reset count</button>
+        </div>
+      </div>
+
+      <div class="filters">
+        <div class="fld">
+          <label for="fromDt">From</label>
+          <input id="fromDt" type="datetime-local" />
+        </div>
+        <div class="fld">
+          <label for="toDt">To</label>
+          <input id="toDt" type="datetime-local" />
+        </div>
+        <button class="btn btn-ghost" id="clearFilter">Clear</button>
+        <div class="count" id="count"></div>
+      </div>
+
+      <div class="grid" id="grid"></div>
+      <div class="empty" id="empty" style="display:none">No report summaries submitted yet.</div>
+    </div>
+  </div>
+
+  <!-- modal -->
+  <div id="overlay">
+    <div class="modal" role="dialog" aria-modal="true">
+      <div class="m-group serif" id="mGroup"></div>
+      <div class="m-meta" id="mMeta"></div>
+      <div class="m-field"><h3>The Reveal</h3><p id="mReveal"></p></div>
+      <div class="m-field"><h3>The Logic</h3><p id="mLogic"></p></div>
+      <div class="m-field"><h3>The Action</h3><p id="mAction"></p></div>
+    </div>
+  </div>
+
+<script>
+  const $ = (id) => document.getElementById(id);
+  let pw = '';
+  let reports = [];
+
+  const esc = (s) => String(s == null ? '' : s).replace(/[&<>"']/g, (c) => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  const pad = (n) => String(n).padStart(2, '0');
+  function fmt(iso){
+    const d = new Date(iso);
+    if (isNaN(d)) return '';
+    return `${pad(d.getDate())}-${pad(d.getMonth()+1)}-${d.getFullYear()} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
+  }
+
+  async function adminPost(action){
+    const res = await fetch('/api/admin', {
+      method:'POST', headers:{ 'Content-Type':'application/json' },
+      body: JSON.stringify({ password: pw, action }),
+    });
+    return res;
+  }
+
+  async function login(){
+    pw = $('pw').value;
+    $('loginErr').textContent = '';
+    $('loginBtn').disabled = true;
+    try {
+      const res = await adminPost('reports');
+      if (res.status === 401){ $('loginErr').textContent = 'Wrong password.'; pw = ''; return; }
+      if (res.status === 500){ $('loginErr').textContent = 'Admin password not configured on the server.'; pw = ''; return; }
+      if (!res.ok) throw new Error('admin ' + res.status);
+      const data = await res.json();
+      reports = data.reports || [];
+      $('login').style.display = 'none';
+      $('dash').style.display = 'block';
+      render();
+    } catch (e){
+      $('loginErr').textContent = 'Could not connect. Try again.';
+      pw = '';
+    } finally {
+      $('loginBtn').disabled = false;
+    }
+  }
+
+  async function refresh(){
+    try {
+      const res = await adminPost('reports');
+      if (!res.ok) throw new Error('admin ' + res.status);
+      const data = await res.json();
+      reports = data.reports || [];
+      render();
+    } catch (e){ /* keep existing */ }
+  }
+
+  async function resetCount(){
+    if (!confirm('Reset every mission envelope count back to 5?')) return;
+    const btn = $('resetBtn'); btn.disabled = true;
+    try {
+      const res = await adminPost('reset');
+      if (!res.ok) throw new Error('reset ' + res.status);
+      btn.textContent = 'Reset ✓';
+      setTimeout(() => { btn.textContent = 'Reset count'; btn.disabled = false; }, 1600);
+    } catch (e){
+      btn.textContent = 'Reset failed';
+      setTimeout(() => { btn.textContent = 'Reset count'; btn.disabled = false; }, 1600);
+    }
+  }
+
+  function filtered(){
+    const from = $('fromDt').value ? new Date($('fromDt').value) : null;
+    const to = $('toDt').value ? new Date($('toDt').value) : null;
+    return reports.filter((r) => {
+      const d = new Date(r.submittedAt);
+      if (from && d < from) return false;
+      if (to && d > to) return false;
+      return true;
+    });
+  }
+
+  function render(){
+    const list = filtered();
+    $('count').textContent = `${list.length} of ${reports.length}`;
+    const grid = $('grid');
+    grid.innerHTML = '';
+    $('empty').style.display = list.length ? 'none' : 'block';
+    list.forEach((r, i) => {
+      const tile = document.createElement('button');
+      tile.className = 'env-tile';
+      tile.innerHTML = `<div class="gname">${esc(r.group)}</div><div class="gtime">${esc(fmt(r.submittedAt))}</div>`;
+      tile.addEventListener('click', () => openModal(r));
+      grid.appendChild(tile);
+    });
+  }
+
+  function openModal(r){
+    $('mGroup').textContent = r.group;
+    const parts = [];
+    if (r.ref) parts.push(r.ref);
+    parts.push(fmt(r.submittedAt));
+    $('mMeta').textContent = parts.join(' · ');
+    setField('mReveal', r.reveal);
+    setField('mLogic', r.logic);
+    setField('mAction', r.action);
+    $('overlay').classList.add('on');
+  }
+  function setField(id, val){
+    const el = $(id);
+    if (val && String(val).trim()){ el.textContent = val; el.classList.remove('blank'); }
+    else { el.textContent = '(left blank)'; el.classList.add('blank'); }
+  }
+  function closeModal(){ $('overlay').classList.remove('on'); }
+
+  // wire up
+  $('loginBtn').addEventListener('click', login);
+  $('pw').addEventListener('keydown', (e) => { if (e.key === 'Enter') login(); });
+  $('refreshBtn').addEventListener('click', refresh);
+  $('resetBtn').addEventListener('click', resetCount);
+  $('fromDt').addEventListener('change', render);
+  $('toDt').addEventListener('change', render);
+  $('clearFilter').addEventListener('click', () => { $('fromDt').value=''; $('toDt').value=''; render(); });
+  $('overlay').addEventListener('click', (e) => { if (e.target === $('overlay')) closeModal(); });
+  document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeModal(); });
+</script>
+</body>
+</html>

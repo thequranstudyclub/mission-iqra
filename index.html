@@ -32,8 +32,26 @@
     background:transparent; color:var(--sage); border:none; cursor:pointer}
   .langsel button[aria-pressed="true"]{background:var(--sage); color:#2a2f22}
 
+  .btn{font-family:inherit; font-size:15px; font-weight:700; padding:15px 18px; border-radius:12px; border:none; cursor:pointer}
+  .btn-primary{background:var(--tan); color:#2a1d12}
+  .btn-primary:disabled{opacity:.45; cursor:default}
+  .btn-ghost{background:transparent; color:var(--ink); border:1.5px solid var(--sage)}
+  .errline{font-size:13px; color:#f0c9b0; min-height:1em; text-align:center}
+
+  /* ---------- 0. LANDING ---------- */
+  #landing{display:none; flex-direction:column; align-items:center; gap:16px; width:100%; margin-top:6px}
+  .seal-badge{width:76px; height:76px; border-radius:50%; display:flex; align-items:center; justify-content:center;
+    background:radial-gradient(circle at 40% 35%, #c0553f, #8f3322); color:var(--cream); font-size:34px;
+    box-shadow:0 8px 20px rgba(0,0,0,.35); margin-bottom:2px}
+  .landing-lead{font-size:14px; color:var(--sage); text-align:center; line-height:1.5; max-width:300px}
+  #groupInput{width:100%; font-family:inherit; font-size:16px; color:var(--ink); text-align:center;
+    background:rgba(255,255,255,.08); border:1.5px solid var(--sage); border-radius:12px; padding:14px 16px}
+  #groupInput::placeholder{color:rgba(249,249,246,.5)}
+  #groupInput:focus{outline:none; border-color:var(--cream)}
+  #openBtn{width:100%}
+
   /* ---------- 1. SHUFFLE ---------- */
-  #shuffle{position:relative; width:180px; height:220px; display:flex; align-items:center; justify-content:center}
+  #shuffle{position:relative; width:180px; height:220px; display:none; align-items:center; justify-content:center}
   .scard{position:absolute; width:104px; height:144px; border-radius:16px; box-shadow:0 10px 24px rgba(0,0,0,.28)}
   .scard:nth-child(1){background:var(--cream)}
   .scard:nth-child(2){background:var(--tan)}
@@ -52,7 +70,7 @@
   .scard:nth-child(3){animation-delay:.28s}
   .scard:nth-child(4){animation-delay:.42s}
   .scard:nth-child(5){animation-delay:.56s}
-  .caption{font-size:13px; color:var(--sage); letter-spacing:1px; min-height:1.2em; text-align:center}
+  .caption{display:none; font-size:13px; color:var(--sage); letter-spacing:1px; min-height:1.2em; text-align:center}
 
   /* ---------- 2. ENVELOPE ---------- */
   #envWrap{display:none; flex-direction:column; align-items:center; gap:16px}
@@ -82,15 +100,17 @@
   .tap-label b{color:var(--ink)}
   .remain{font-size:12px; color:var(--sage); min-height:1em}
 
-  /* ---------- 3. MISSION CARD ---------- */
+  /* ---------- 3. MISSION CARD + DOSSIER ---------- */
   #cardWrap{display:none; width:100%; flex-direction:column; align-items:center; gap:18px}
-  .mcard{
+  .card-group{font-size:12px; letter-spacing:1px; color:var(--sage)}
+  .card-group b{color:var(--ink)}
+  .paper{
     width:100%; background:var(--cream); color:var(--kraft); border-radius:18px; padding:26px 24px 28px;
     box-shadow:0 24px 60px rgba(0,0,0,.4); position:relative; overflow:hidden;
-    animation:rise .55s cubic-bezier(.2,.7,.2,1) both;
   }
+  .mcard{animation:rise .55s cubic-bezier(.2,.7,.2,1) both}
   @keyframes rise{from{transform:translateY(40px) scale(.96); opacity:0}to{transform:none; opacity:1}}
-  .mcard::before{content:""; position:absolute; inset:0; border:2px dashed rgba(74,55,40,.25); border-radius:14px; margin:8px; pointer-events:none}
+  .paper::before{content:""; position:absolute; inset:0; border:2px dashed rgba(74,55,40,.25); border-radius:14px; margin:8px; pointer-events:none}
   .tag{font-size:11px; letter-spacing:2px; text-transform:uppercase; color:var(--tan); font-weight:700}
   .mtitle{font-size:24px; margin:6px 0 16px; color:var(--kraft)}
   .brief-label{font-size:10px; letter-spacing:2px; text-transform:uppercase; color:var(--tan); text-align:center; margin-bottom:4px}
@@ -100,11 +120,22 @@
   .mission-label{font-size:10px; letter-spacing:2px; text-transform:uppercase; color:var(--tan); margin-bottom:6px}
   .prompt{font-size:15px; line-height:1.6; color:#4a3728}
   .ref{margin-top:16px; font-size:12px; color:var(--tan); font-weight:600; text-align:right}
-  .actions{display:flex; gap:12px; width:100%}
-  button.act{flex:1; font-family:inherit; font-size:14px; font-weight:600; padding:14px; border-radius:12px; border:none; cursor:pointer}
-  .btn-return{background:transparent; color:var(--ink); border:1.5px solid var(--sage)}
-  .btn-return:disabled{opacity:.5; cursor:default}
-  .returned{font-size:13px; color:var(--sage); text-align:center; min-height:1em}
+  #writeReportBtn{width:100%}
+
+  /* dossier */
+  #dossier{display:none; width:100%; flex-direction:column; gap:18px}
+  .dossier-title{font-size:16px; color:var(--kraft); margin-bottom:4px}
+  .field{display:flex; flex-direction:column; gap:6px; margin-bottom:14px}
+  .field:last-of-type{margin-bottom:4px}
+  .field label{font-size:13px; font-weight:700; color:var(--kraft)}
+  .field textarea{
+    font-family:inherit; font-size:14px; color:#3a2b1e; line-height:1.5; resize:vertical; min-height:70px;
+    background:#fff7ec; border:1.5px solid rgba(74,55,40,.3); border-radius:10px; padding:10px 12px;
+  }
+  .field textarea::placeholder{color:#a98a6b}
+  .field textarea:focus{outline:none; border-color:var(--tan)}
+  #submitReportBtn{width:100%; margin-top:2px}
+  .submitted-msg{font-size:13px; color:var(--sage); text-align:center; min-height:1em}
 
   /* ---------- error ---------- */
   #errWrap{display:none; flex-direction:column; align-items:center; gap:14px; text-align:center}
@@ -133,6 +164,16 @@
       </div>
     </div>
 
+    <!-- 0. landing -->
+    <div id="landing">
+      <div class="seal-badge serif">ق</div>
+      <div class="landing-lead" id="landingLead"></div>
+      <input id="groupInput" type="text" maxlength="50" autocomplete="off"
+             enterkeyhint="go" aria-label="Group name" />
+      <button class="btn btn-primary" id="openBtn" disabled></button>
+      <div class="errline" id="landingErr"></div>
+    </div>
+
     <!-- 1. shuffle -->
     <div id="shuffle">
       <div class="scard"></div><div class="scard"></div><div class="scard"></div>
@@ -151,9 +192,10 @@
       <div class="remain" id="remain"></div>
     </div>
 
-    <!-- 3. mission card -->
+    <!-- 3. mission card + dossier -->
     <div id="cardWrap">
-      <div class="mcard">
+      <div class="card-group" id="cardGroup"></div>
+      <div class="paper mcard">
         <div class="tag" id="mTag">Mission 01</div>
         <h1 class="mtitle serif" id="mTitle"></h1>
         <div class="brief-label" id="briefLabel">Your ayat</div>
@@ -164,10 +206,28 @@
         <p class="prompt" id="mPrompt"></p>
         <div class="ref" id="mRef"></div>
       </div>
-      <div class="actions">
-        <button class="act btn-return" id="btnReturn">Return envelope</button>
+
+      <button class="btn btn-ghost" id="writeReportBtn"></button>
+
+      <div id="dossier">
+        <div class="paper">
+          <div class="dossier-title serif" id="dossierTitle"></div>
+          <div class="field">
+            <label id="lblReveal" for="fReveal"></label>
+            <textarea id="fReveal"></textarea>
+          </div>
+          <div class="field">
+            <label id="lblLogic" for="fLogic"></label>
+            <textarea id="fLogic"></textarea>
+          </div>
+          <div class="field">
+            <label id="lblAction" for="fAction"></label>
+            <textarea id="fAction"></textarea>
+          </div>
+        </div>
+        <button class="btn btn-primary" id="submitReportBtn"></button>
+        <div class="submitted-msg" id="submittedMsg"></div>
       </div>
-      <div class="returned" id="returnedMsg"></div>
     </div>
 
     <!-- error -->
@@ -185,50 +245,60 @@
   const CLAIM_KEY = 'himmah_claim';
   const LANG_KEY = 'himmah_lang';
   const SHUFFLE_MS = 1600;
+  const clientDate = () => new Date().toISOString().slice(0, 10);
 
   let lang = localStorage.getItem(LANG_KEY) === 'id' ? 'id' : 'en';
+  let group = '';
   let lastDrawn = null;
-  let claimId = null;
-  let lastRemaining = null;   // null when reusing a stored claim (unknown/stale)
-  let returned = false;
+  let lastRemaining = null;   // null when reusing a stored claim
+  let submitted = false;
 
   const getClaim = () => { try { return JSON.parse(localStorage.getItem(CLAIM_KEY)); } catch { return null; } };
   const setClaim = (c) => localStorage.setItem(CLAIM_KEY, JSON.stringify(c));
-  const clearClaim = () => localStorage.removeItem(CLAIM_KEY);
 
   // ----- views -----
-  const views = ['shuffle','caption','envWrap','cardWrap','errWrap'];
+  const views = ['landing','shuffle','caption','envWrap','cardWrap','errWrap'];
+  const displayFor = (v) => (v === 'caption' ? 'block' : 'flex');
   function show(...ids){
-    for (const v of views){
-      const el = $(v);
-      el.style.display = ids.includes(v)
-        ? (v === 'shuffle' || v === 'caption' ? (v === 'shuffle' ? 'flex' : 'block') : 'flex')
-        : 'none';
-    }
+    for (const v of views) $(v).style.display = ids.includes(v) ? displayFor(v) : 'none';
   }
 
-  // ----- i18n render -----
+  // ----- i18n -----
+  function t(){ return I18N[lang]; }
   function applyLang(){
-    const t = I18N[lang];
+    const x = t();
     document.documentElement.lang = lang;
-    $('brandmark').textContent = t.brand;
-    $('caption').textContent = t.shuffling;
-    $('tapLabel').innerHTML = t.tap;
-    $('envelope').setAttribute('aria-label', t.envAria);
-    $('briefLabel').textContent = t.briefLabel;
-    $('missionLabel').textContent = t.missionLabel;
-    $('btnReturn').textContent = t.ret;
-    $('errTitle').textContent = t.errTitle;
-    $('errBody').textContent = t.errBody;
-    $('btnRetry').textContent = t.retry;
+    $('brandmark').textContent = x.brand;
+    $('landingLead').textContent = x.landingLead;
+    $('groupInput').placeholder = x.groupPlaceholder;
+    $('openBtn').textContent = x.openBtn;
+    $('caption').textContent = x.shuffling;
+    $('tapLabel').innerHTML = x.tap;
+    $('envelope').setAttribute('aria-label', x.envAria);
+    $('briefLabel').textContent = x.briefLabel;
+    $('missionLabel').textContent = x.missionLabel;
+    $('writeReportBtn').textContent = x.writeReport;
+    $('dossierTitle').textContent = x.dossierTitle;
+    $('lblReveal').textContent = x.report.reveal.label;
+    $('fReveal').placeholder = x.report.reveal.hint;
+    $('lblLogic').textContent = x.report.logic.label;
+    $('fLogic').placeholder = x.report.logic.hint;
+    $('lblAction').textContent = x.report.action.label;
+    $('fAction').placeholder = x.report.action.hint;
+    $('submitReportBtn').textContent = x.submitReport;
+    $('errTitle').textContent = x.errTitle;
+    $('errBody').textContent = x.errBody;
+    $('btnRetry').textContent = x.retry;
     $('langEn').setAttribute('aria-pressed', lang === 'en');
     $('langId').setAttribute('aria-pressed', lang === 'id');
+    if (group) $('cardGroup').innerHTML = '<b>' + escapeHtml(group) + '</b>';
     updateRemain();
+    if (submitted) $('submittedMsg').textContent = x.submitted;
     if ($('cardWrap').style.display === 'flex' && lastDrawn !== null) renderCard();
-    if (returned) $('returnedMsg').textContent = I18N[lang].returned;
   }
+  function escapeHtml(s){ return String(s).replace(/[&<>"']/g, (c) => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
   function updateRemain(){
-    $('remain').textContent = (lastRemaining === null) ? I18N[lang].reused : I18N[lang].remain(lastRemaining);
+    $('remain').textContent = (lastRemaining === null) ? t().reused : t().remain(lastRemaining);
   }
   function renderCard(){
     const m = MISSIONS[lastDrawn], L = m[lang];
@@ -241,42 +311,39 @@
   }
   function setLang(l){ lang = l; localStorage.setItem(LANG_KEY, l); applyLang(); }
 
-  // ----- flow -----
-  async function draw(){
-    const res = await fetch('/api/draw', { method:'POST' });
-    if (!res.ok) throw new Error('draw ' + res.status);
-    return res.json();  // { claimId, mission, remaining }
+  // ----- landing / draw -----
+  function refreshOpenBtn(){ $('openBtn').disabled = $('groupInput').value.trim().length === 0; }
+
+  async function openMissionCard(){
+    const name = $('groupInput').value.trim();
+    if (!name){ $('landingErr').textContent = t().nameRequired; return; }
+    $('landingErr').textContent = '';
+    $('openBtn').disabled = true;
+    let data;
+    try {
+      const res = await fetch('/api/draw', {
+        method:'POST', headers:{ 'Content-Type':'application/json' },
+        body: JSON.stringify({ group: name }),
+      });
+      if (res.status === 409){ $('landingErr').textContent = t().nameInUse; $('openBtn').disabled = false; return; }
+      if (!res.ok) throw new Error('draw ' + res.status);
+      data = await res.json();
+    } catch (e){
+      show('errWrap');
+      return;
+    }
+    group = name;
+    lastDrawn = data.mission;
+    lastRemaining = data.remaining;
+    setClaim({ group, mission: lastDrawn, date: clientDate() });
+    $('cardGroup').innerHTML = '<b>' + escapeHtml(group) + '</b>';
+    runShuffle();
   }
 
-  async function begin(){
+  function runShuffle(){
     show('shuffle','caption');
     $('envelope').classList.remove('open');
-    returned = false;
-    $('returnedMsg').textContent = '';
-
-    const wait = new Promise((r) => setTimeout(r, SHUFFLE_MS));
-    const claim = getClaim();
-    try {
-      if (claim && claim.id != null && claim.mission != null){
-        // reload on same device: reuse, draw nothing
-        lastDrawn = claim.mission; claimId = claim.id; lastRemaining = null;
-      } else {
-        const d = await draw();
-        lastDrawn = d.mission; claimId = d.claimId; lastRemaining = d.remaining;
-        setClaim({ id: claimId, mission: lastDrawn });
-      }
-      await wait;
-      revealEnvelope();
-    } catch (e){
-      await wait;
-      show('errWrap');
-    }
-  }
-
-  function revealEnvelope(){
-    updateRemain();
-    show('envWrap');
-    $('btnReturn').disabled = false;
+    setTimeout(() => { updateRemain(); show('envWrap'); }, SHUFFLE_MS);
   }
 
   function openEnvelope(){
@@ -286,33 +353,69 @@
     setTimeout(() => { show('cardWrap'); }, 620);
   }
 
-  async function returnEnvelope(){
-    if (returned || !claimId) return;
-    $('btnReturn').disabled = true;
+  // ----- report -----
+  function showDossier(){
+    $('writeReportBtn').style.display = 'none';
+    $('dossier').style.display = 'flex';
+    $('fReveal').focus();
+  }
+  async function submitReport(){
+    if (submitted) return;
+    const btn = $('submitReportBtn');
+    btn.disabled = true;
+    $('submittedMsg').textContent = '';
     try {
-      const res = await fetch('/api/return', {
+      const res = await fetch('/api/report', {
         method:'POST', headers:{ 'Content-Type':'application/json' },
-        body: JSON.stringify({ claimId }),
+        body: JSON.stringify({
+          group,
+          reveal: $('fReveal').value,
+          logic: $('fLogic').value,
+          action: $('fAction').value,
+        }),
       });
-      if (!res.ok) throw new Error('return ' + res.status);
-      returned = true;
-      clearClaim();
-      $('returnedMsg').textContent = I18N[lang].returned;
+      if (!res.ok) throw new Error('report ' + res.status);
+      submitted = true;
+      for (const id of ['fReveal','fLogic','fAction']) $(id).disabled = true;
+      $('submittedMsg').textContent = t().submitted;
     } catch (e){
-      $('btnReturn').disabled = false;
+      $('submittedMsg').textContent = t().submitError;
+      btn.disabled = false;
+    }
+  }
+
+  // ----- boot -----
+  function boot(){
+    const claim = getClaim();
+    if (claim && claim.group && claim.mission != null && claim.date === clientDate()){
+      // same device, same day: reuse, no new draw
+      group = claim.group;
+      lastDrawn = claim.mission;
+      lastRemaining = null;
+      $('cardGroup').innerHTML = '<b>' + escapeHtml(group) + '</b>';
+      show('shuffle','caption');
+      $('envelope').classList.remove('open');
+      setTimeout(() => { updateRemain(); show('envWrap'); }, SHUFFLE_MS);
+    } else {
+      show('landing');
+      refreshOpenBtn();
     }
   }
 
   // ----- wire up -----
   $('langEn').addEventListener('click', () => setLang('en'));
   $('langId').addEventListener('click', () => setLang('id'));
+  $('groupInput').addEventListener('input', refreshOpenBtn);
+  $('groupInput').addEventListener('keydown', (e) => { if (e.key === 'Enter' && !$('openBtn').disabled) openMissionCard(); });
+  $('openBtn').addEventListener('click', openMissionCard);
   $('envelope').addEventListener('click', openEnvelope);
   $('envelope').addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' '){ e.preventDefault(); openEnvelope(); } });
-  $('btnReturn').addEventListener('click', returnEnvelope);
-  $('btnRetry').addEventListener('click', begin);
+  $('writeReportBtn').addEventListener('click', showDossier);
+  $('submitReportBtn').addEventListener('click', submitReport);
+  $('btnRetry').addEventListener('click', boot);
 
   applyLang();
-  begin();
+  boot();
 </script>
 </body>
 </html>
