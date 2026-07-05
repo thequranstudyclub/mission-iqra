@@ -42,6 +42,20 @@
   .filters input:focus{outline:none; border-color:var(--cream)}
   .count{font-size:13px; color:var(--sage); margin-left:auto}
 
+  /* countdown timer */
+  .timerbar{display:flex; align-items:center; gap:18px; flex-wrap:wrap; margin-bottom:16px;
+    background:rgba(255,255,255,.06); border:1px solid rgba(172,181,154,.35); border-radius:14px; padding:14px 18px}
+  .clock{font-family:'RocaTwo',Georgia,serif; font-weight:700; font-size:44px; line-height:1;
+    letter-spacing:1px; color:var(--ink); min-width:150px; font-variant-numeric:tabular-nums}
+  .clock.done{color:#f0a58c}
+  .tctrl{display:flex; align-items:flex-end; gap:10px; flex-wrap:wrap}
+  .tctrl .fld{display:flex; flex-direction:column; gap:5px}
+  .tctrl label{font-size:11px; letter-spacing:1px; text-transform:uppercase; color:var(--sage)}
+  .tctrl input{width:88px; font-family:inherit; font-size:14px; color:var(--ink); background:rgba(255,255,255,.08);
+    border:1.5px solid var(--sage); border-radius:9px; padding:9px 11px}
+  .tctrl input:focus{outline:none; border-color:var(--cream)}
+  .tctrl input:disabled{opacity:.5}
+
   .grid{display:grid; grid-template-columns:repeat(auto-fill, minmax(180px,1fr)); gap:16px}
   .env-tile{position:relative; aspect-ratio:3/2; border-radius:10px; cursor:pointer; border:none;
     background:linear-gradient(160deg,#5a4433,var(--kraft)); box-shadow:0 10px 24px rgba(0,0,0,.3);
@@ -89,6 +103,18 @@
         <div class="head-actions">
           <button class="btn btn-ghost" id="refreshBtn">Refresh</button>
           <button class="btn btn-danger" id="resetBtn">Reset count</button>
+        </div>
+      </div>
+
+      <div class="timerbar">
+        <div class="clock" id="clock">45:00</div>
+        <div class="tctrl">
+          <div class="fld">
+            <label for="tMin">Minutes</label>
+            <input id="tMin" type="number" min="0" max="180" step="1" value="45" />
+          </div>
+          <button class="btn btn-primary" id="startStop">Start</button>
+          <button class="btn btn-ghost" id="tReset">Reset</button>
         </div>
       </div>
 
@@ -231,6 +257,37 @@
     else { el.textContent = '(left blank)'; el.classList.add('blank'); }
   }
   function closeModal(){ $('overlay').classList.remove('on'); }
+
+  // ---- countdown timer ----
+  let remaining = 45 * 60;
+  let running = false;
+  let tid = null;
+  function fmtClock(s){ const m = Math.floor(s/60); return `${pad(m)}:${pad(s%60)}`; }
+  function renderClock(){ $('clock').textContent = fmtClock(Math.max(0, remaining)); }
+  function stopTimer(){
+    running = false; $('startStop').textContent = 'Start'; $('tMin').disabled = false;
+    if (tid){ clearInterval(tid); tid = null; }
+  }
+  function startTimer(){
+    if (running || remaining <= 0) return;
+    running = true; $('startStop').textContent = 'Pause'; $('tMin').disabled = true;
+    $('clock').classList.remove('done');
+    tid = setInterval(() => {
+      remaining--;
+      renderClock();
+      if (remaining <= 0){ remaining = 0; renderClock(); stopTimer(); $('clock').classList.add('done'); }
+    }, 1000);
+  }
+  function resetTimer(){
+    stopTimer();
+    remaining = Math.max(0, Math.min(180, parseInt($('tMin').value || '0', 10))) * 60;
+    $('clock').classList.remove('done');
+    renderClock();
+  }
+  $('startStop').addEventListener('click', () => (running ? stopTimer() : startTimer()));
+  $('tReset').addEventListener('click', resetTimer);
+  $('tMin').addEventListener('change', () => { if (!running) resetTimer(); });
+  renderClock();
 
   // wire up
   $('loginBtn').addEventListener('click', login);
