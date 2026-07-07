@@ -1,0 +1,194 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>Operation Iqra — Mission Logs</title>
+<style>
+  @font-face{ font-family:'RocaTwo'; font-weight:700; font-display:swap; src:url('./fonts/RocaTwo-Bold.ttf') format('truetype'); }
+  :root{ --bg:#717b5e; --bg2:#2E3326; --ink:#F9F9F6; --sage:#acb59a; --tan:#ab875f; --cream:#ffead1; --kraft:#4A3728; }
+  *{box-sizing:border-box; margin:0; padding:0}
+  body{ min-height:100dvh; background:radial-gradient(120% 90% at 50% 0%, #7d876a 0%, var(--bg) 45%, var(--bg2) 100%);
+    color:var(--ink); font-family:'Inter',system-ui,-apple-system,'Segoe UI',sans-serif; padding:24px; }
+  .serif{font-family:'RocaTwo',Georgia,serif; font-weight:700}
+  .wrap{max-width:960px; margin:0 auto}
+  .btn{font-family:inherit; font-weight:700; font-size:14px; padding:11px 16px; border-radius:11px; border:none; cursor:pointer}
+  .btn-ghost{background:transparent; color:var(--ink); border:1.5px solid var(--sage)}
+
+  .head{margin-bottom:18px}
+  .head .sub{font-size:11px; letter-spacing:2px; text-transform:uppercase; color:var(--sage)}
+  .head h1{font-size:22px; margin-top:4px}
+
+  .filters{display:flex; gap:12px; align-items:flex-end; flex-wrap:wrap; margin-bottom:20px;
+    background:rgba(255,255,255,.06); border:1px solid rgba(172,181,154,.35); border-radius:14px; padding:14px 16px}
+  .filters .fld{display:flex; flex-direction:column; gap:5px}
+  .filters label{font-size:11px; letter-spacing:1px; text-transform:uppercase; color:var(--sage)}
+  .filters input, .filters select{font-family:inherit; font-size:14px; color:var(--ink); background:rgba(255,255,255,.08);
+    border:1.5px solid var(--sage); border-radius:9px; padding:9px 11px}
+  .filters input:focus, .filters select:focus{outline:none; border-color:var(--cream)}
+  .filters select option{color:#2a2f22}
+  .count{font-size:13px; color:var(--sage); margin-left:auto}
+
+  .grid{display:grid; grid-template-columns:repeat(auto-fill, minmax(180px,1fr)); gap:16px}
+  .env-tile{position:relative; aspect-ratio:3/2; border-radius:10px; cursor:pointer; border:none;
+    background:linear-gradient(160deg,#5a4433,var(--kraft)); box-shadow:0 10px 24px rgba(0,0,0,.3);
+    display:flex; flex-direction:column; align-items:center; justify-content:center; gap:6px; padding:12px; text-align:center;
+    transition:transform .18s ease}
+  .env-tile:hover{transform:translateY(-3px)}
+  .env-tile::before{content:""; position:absolute; top:0; left:0; width:100%; height:52%;
+    background:linear-gradient(160deg,#6b5137,#3d2e21); clip-path:polygon(0 0,100% 0,50% 100%); border-radius:10px 10px 0 0}
+  .env-tile .gname{position:relative; z-index:1; color:var(--cream); font-weight:700; font-size:15px; word-break:break-word; margin-top:14%}
+  .env-tile .gref{position:relative; z-index:1; color:var(--cream); opacity:.8; font-size:11px}
+  .env-tile .gtime{position:relative; z-index:1; color:var(--sage); font-size:11px}
+  .empty{color:var(--sage); font-size:14px; padding:30px 0; text-align:center}
+
+  #overlay{display:none; position:fixed; inset:0; background:rgba(20,22,16,.72); z-index:50; align-items:center; justify-content:center; padding:24px}
+  #overlay.on{display:flex}
+  .modal{width:100%; max-width:480px; max-height:86vh; overflow:auto; background:var(--cream); color:var(--kraft);
+    border-radius:18px; padding:26px 24px; box-shadow:0 30px 70px rgba(0,0,0,.5)}
+  .modal .m-group{font-size:22px; margin-bottom:2px}
+  .modal .m-meta{font-size:12px; color:var(--tan); font-weight:600; margin-bottom:18px}
+  .modal .m-field{margin-bottom:16px}
+  .modal .m-field h3{font-size:12px; letter-spacing:1px; text-transform:uppercase; color:var(--tan); margin-bottom:4px}
+  .modal .m-field p{font-size:15px; line-height:1.55; color:#3a2b1e; white-space:pre-wrap; word-break:break-word}
+  .modal .m-field p.blank{color:#a98a6b; font-style:italic}
+</style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="head">
+      <div class="sub">QSC × HIMMAH · Operation Iqra</div>
+      <h1 class="serif">Mission Logs</h1>
+    </div>
+
+    <div class="filters">
+      <div class="fld">
+        <label for="qName">Search group</label>
+        <input id="qName" type="text" placeholder="Group name…" autocomplete="off" />
+      </div>
+      <div class="fld">
+        <label for="fMission">Mission</label>
+        <select id="fMission">
+          <option value="">All missions</option>
+          <option value="0">Al-Alaq: 1</option>
+          <option value="1">Al-Alaq: 2</option>
+          <option value="2">Al-Alaq: 3</option>
+          <option value="3">Al-Alaq: 4-5</option>
+        </select>
+      </div>
+      <div class="fld">
+        <label for="fromDt">From</label>
+        <input id="fromDt" type="datetime-local" />
+      </div>
+      <div class="fld">
+        <label for="toDt">To</label>
+        <input id="toDt" type="datetime-local" />
+      </div>
+      <button class="btn btn-ghost" id="clearFilter">Clear</button>
+      <div class="count" id="count"></div>
+    </div>
+
+    <div class="grid" id="grid"></div>
+    <div class="empty" id="empty" style="display:none">No report summaries submitted yet.</div>
+  </div>
+
+  <div id="overlay">
+    <div class="modal" role="dialog" aria-modal="true">
+      <div class="m-group serif" id="mGroup"></div>
+      <div class="m-meta" id="mMeta"></div>
+      <div class="m-field"><h3>The Reveal</h3><p id="mReveal"></p></div>
+      <div class="m-field"><h3>The Logic</h3><p id="mLogic"></p></div>
+      <div class="m-field"><h3>The Action</h3><p id="mAction"></p></div>
+    </div>
+  </div>
+
+<script>
+  const $ = (id) => document.getElementById(id);
+  let reports = [];
+
+  const esc = (s) => String(s == null ? '' : s).replace(/[&<>"']/g, (c) => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  const pad = (n) => String(n).padStart(2, '0');
+  function fmt(iso){
+    const d = new Date(iso);
+    if (isNaN(d)) return '';
+    return `${pad(d.getDate())}-${pad(d.getMonth()+1)}-${d.getFullYear()} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
+  }
+
+  async function load(){
+    try {
+      const res = await fetch('/api/logs');
+      if (!res.ok) throw new Error('logs ' + res.status);
+      const data = await res.json();
+      reports = data.reports || [];
+      render();
+    } catch (e){
+      $('empty').textContent = 'Could not load logs. Reload the page.';
+      $('empty').style.display = 'block';
+    }
+  }
+
+  function filtered(){
+    const q = $('qName').value.trim().toLowerCase();
+    const mission = $('fMission').value;
+    const from = $('fromDt').value ? new Date($('fromDt').value) : null;
+    const to = $('toDt').value ? new Date($('toDt').value) : null;
+    return reports.filter((r) => {
+      if (q && !String(r.group || '').toLowerCase().includes(q)) return false;
+      if (mission !== '' && String(r.mission) !== mission) return false;
+      const d = new Date(r.submittedAt);
+      if (from && d < from) return false;
+      if (to && d > to) return false;
+      return true;
+    });
+  }
+
+  function render(){
+    const list = filtered();
+    $('count').textContent = `${list.length} of ${reports.length}`;
+    const grid = $('grid');
+    grid.innerHTML = '';
+    $('empty').style.display = list.length ? 'none' : 'block';
+    list.forEach((r) => {
+      const tile = document.createElement('button');
+      tile.className = 'env-tile';
+      tile.innerHTML =
+        `<div class="gname">${esc(r.group)}</div>` +
+        `<div class="gref">${esc(r.ref || '')}</div>` +
+        `<div class="gtime">${esc(fmt(r.submittedAt))}</div>`;
+      tile.addEventListener('click', () => openModal(r));
+      grid.appendChild(tile);
+    });
+  }
+
+  function openModal(r){
+    $('mGroup').textContent = r.group;
+    const parts = [];
+    if (r.ref) parts.push(r.ref);
+    parts.push(fmt(r.submittedAt));
+    $('mMeta').textContent = parts.join(' · ');
+    setField('mReveal', r.reveal);
+    setField('mLogic', r.logic);
+    setField('mAction', r.action);
+    $('overlay').classList.add('on');
+  }
+  function setField(id, val){
+    const el = $(id);
+    if (val && String(val).trim()){ el.textContent = val; el.classList.remove('blank'); }
+    else { el.textContent = '(left blank)'; el.classList.add('blank'); }
+  }
+  function closeModal(){ $('overlay').classList.remove('on'); }
+
+  $('qName').addEventListener('input', render);
+  $('fMission').addEventListener('change', render);
+  $('fromDt').addEventListener('change', render);
+  $('toDt').addEventListener('change', render);
+  $('clearFilter').addEventListener('click', () => {
+    $('qName').value=''; $('fMission').value=''; $('fromDt').value=''; $('toDt').value=''; render();
+  });
+  $('overlay').addEventListener('click', (e) => { if (e.target === $('overlay')) closeModal(); });
+  document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeModal(); });
+
+  load();
+</script>
+</body>
+</html>
