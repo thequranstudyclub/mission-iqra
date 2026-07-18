@@ -192,26 +192,48 @@
       // Share the (validated) password with the Manage GameEvents page so it
       // doesn't prompt again. sessionStorage: same-origin, cleared on tab close.
       sessionStorage.setItem('qsc_admin_pw', pw);
-      const data = await res.json();
-      const events = data.events || [];
-      const sel = $('eventSel');
-      sel.innerHTML = '';
-      if (!events.length){
-        const opt = document.createElement('option');
-        opt.value = 'operation-iqra'; opt.textContent = 'operation-iqra (none configured)';
-        sel.appendChild(opt);
-      } else {
-        events.forEach((s) => { const o = document.createElement('option'); o.value = s; o.textContent = s; sel.appendChild(o); });
-      }
-      slug = sel.value;
-      $('login').style.display = 'none';
-      $('dash').style.display = 'block';
-      await refresh();
+      await enterDash(await res.json());
     } catch (e){
       $('loginErr').textContent = 'Could not connect. Try again.';
       pw = '';
     } finally {
       $('loginBtn').disabled = false;
+    }
+  }
+
+  // Populate the event picker and show the dashboard (shared by manual login and
+  // the stored-password auto-login).
+  async function enterDash(data){
+    const events = (data && data.events) || [];
+    const sel = $('eventSel');
+    sel.innerHTML = '';
+    if (!events.length){
+      const opt = document.createElement('option');
+      opt.value = 'operation-iqra'; opt.textContent = 'operation-iqra (none configured)';
+      sel.appendChild(opt);
+    } else {
+      events.forEach((s) => { const o = document.createElement('option'); o.value = s; o.textContent = s; sel.appendChild(o); });
+    }
+    slug = sel.value;
+    $('login').style.display = 'none';
+    $('dash').style.display = 'block';
+    await refresh();
+  }
+
+  // Skip the login screen when arriving from the events page (or a prior admin
+  // login this session), which stored the password in sessionStorage. Validate
+  // once; on any failure drop it and show the manual login.
+  async function tryStoredLogin(){
+    const stored = sessionStorage.getItem('qsc_admin_pw');
+    if (!stored) return;
+    pw = stored;
+    try {
+      const res = await adminPost('listEvents');
+      if (!res.ok) throw new Error('admin ' + res.status);
+      await enterDash(await res.json());
+    } catch (e){
+      sessionStorage.removeItem('qsc_admin_pw');
+      pw = '';
     }
   }
 
@@ -331,6 +353,8 @@
   $('clearFilter').addEventListener('click', () => { $('fromDt').value=''; $('toDt').value=''; render(); });
   $('overlay').addEventListener('click', (e) => { if (e.target === $('overlay')) closeModal(); });
   document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeModal(); });
+
+  tryStoredLogin();
 </script>
 </body>
 </html>
