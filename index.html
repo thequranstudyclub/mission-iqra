@@ -104,6 +104,14 @@
   #cardWrap{display:none; width:100%; flex-direction:column; align-items:center; gap:18px}
   .card-group{font-size:12px; letter-spacing:1px; color:var(--sage)}
   .card-group b{color:var(--ink)}
+
+  /* group-number card (online mode) — same width, smaller height, sits above mission card */
+  .groupnum-card{width:100%; display:none; background:var(--cream); color:var(--kraft); border-radius:14px;
+    padding:14px 18px; box-shadow:0 12px 30px rgba(0,0,0,.3); text-align:center}
+  .groupnum-card.on{display:block}
+  .gnc-lead{font-size:10px; letter-spacing:2px; text-transform:uppercase; color:var(--tan); margin-bottom:4px}
+  .gnc-num{font-size:22px; color:var(--kraft)}
+
   .paper{
     width:100%; background:var(--cream); color:var(--kraft); border-radius:18px; padding:26px 24px 28px;
     box-shadow:0 24px 60px rgba(0,0,0,.4); position:relative; overflow:hidden;
@@ -195,6 +203,12 @@
     <!-- 3. mission card + dossier -->
     <div id="cardWrap">
       <div class="card-group" id="cardGroup"></div>
+
+      <div class="groupnum-card" id="groupNumCard">
+        <div class="gnc-lead" id="gncLead"></div>
+        <div class="gnc-num serif" id="gncNum"></div>
+      </div>
+
       <div class="paper mcard">
         <div class="tag" id="mTag">Mission 01</div>
         <h1 class="mtitle serif" id="mTitle"></h1>
@@ -212,18 +226,7 @@
       <div id="dossier">
         <div class="paper">
           <div class="dossier-title serif" id="dossierTitle"></div>
-          <div class="field">
-            <label id="lblReveal" for="fReveal"></label>
-            <textarea id="fReveal"></textarea>
-          </div>
-          <div class="field">
-            <label id="lblLogic" for="fLogic"></label>
-            <textarea id="fLogic"></textarea>
-          </div>
-          <div class="field">
-            <label id="lblAction" for="fAction"></label>
-            <textarea id="fAction"></textarea>
-          </div>
+          <div id="reportFields"></div>
         </div>
         <button class="btn btn-primary" id="submitReportBtn"></button>
         <div class="submitted-msg" id="submittedMsg"></div>
@@ -239,22 +242,35 @@
   </div>
 
 <script type="module">
-  import { I18N, MISSIONS } from './lib/strings.js';
+  import { I18N } from './lib/strings.js';
 
   const $ = (id) => document.getElementById(id);
-  const CLAIM_KEY = 'himmah_claim';
-  const LANG_KEY = 'himmah_lang';
   const SHUFFLE_MS = 1600;
   const clientDate = () => new Date().toISOString().slice(0, 10);
 
+  // ----- event context -----
+  const slug = (new URLSearchParams(location.search).get('event') || 'operation-iqra').trim();
+  const CLAIM_KEY = `himmah_claim_${slug}`;
+  const PLAYER_KEY = `himmah_pid_${slug}`;
+  const LANG_KEY = 'himmah_lang';
+
+  let event = null;         // the GameEvent config
+  let online = false;       // player_per_group > 1
   let lang = localStorage.getItem(LANG_KEY) === 'id' ? 'id' : 'en';
-  let group = '';
-  let lastDrawn = null;
-  let lastRemaining = null;   // null when reusing a stored claim
+  let group = '';           // offline: the name; online: unused label
+  let groupKey = '';        // report key: name (offline) or group number (online)
+  let groupNumber = null;   // online only
+  let lastDrawn = null;     // mission card index
+  let lastRemaining = null; // offline envelopes left; null when reusing / online
   let submitted = false;
 
   const getClaim = () => { try { return JSON.parse(localStorage.getItem(CLAIM_KEY)); } catch { return null; } };
   const setClaim = (c) => localStorage.setItem(CLAIM_KEY, JSON.stringify(c));
+  function playerId(){
+    let p = localStorage.getItem(PLAYER_KEY);
+    if (!p){ p = (crypto.randomUUID ? crypto.randomUUID() : String(Math.random()).slice(2) + Date.now()); localStorage.setItem(PLAYER_KEY, p); }
+    return p;
+  }
 
   // ----- views -----
   const views = ['landing','shuffle','caption','envWrap','cardWrap','errWrap'];
@@ -265,13 +281,15 @@
 
   // ----- i18n -----
   function t(){ return I18N[lang]; }
+  function escapeHtml(s){ return String(s).replace(/[&<>"']/g, (c) => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+
   function applyLang(){
     const x = t();
     document.documentElement.lang = lang;
-    $('brandmark').textContent = x.brand;
-    $('landingLead').textContent = x.landingLead;
+    $('brandmark').textContent = (event && event.title) ? event.title : x.brand;
+    $('landingLead').textContent = online ? x.joinLead : x.landingLead;
     $('groupInput').placeholder = x.groupPlaceholder;
-    $('openBtn').textContent = x.openBtn;
+    $('openBtn').textContent = online ? x.joinBtn : x.openBtn;
     $('caption').textContent = x.shuffling;
     $('tapLabel').innerHTML = x.tap;
     $('envelope').setAttribute('aria-label', x.envAria);
@@ -279,64 +297,120 @@
     $('missionLabel').textContent = x.missionLabel;
     $('writeReportBtn').textContent = x.writeReport;
     $('dossierTitle').textContent = x.dossierTitle;
-    $('lblReveal').textContent = x.report.reveal.label;
-    $('fReveal').placeholder = x.report.reveal.hint;
-    $('lblLogic').textContent = x.report.logic.label;
-    $('fLogic').placeholder = x.report.logic.hint;
-    $('lblAction').textContent = x.report.action.label;
-    $('fAction').placeholder = x.report.action.hint;
     $('submitReportBtn').textContent = x.submitReport;
     $('errTitle').textContent = x.errTitle;
     $('errBody').textContent = x.errBody;
     $('btnRetry').textContent = x.retry;
     $('langEn').setAttribute('aria-pressed', lang === 'en');
     $('langId').setAttribute('aria-pressed', lang === 'id');
-    if (group) $('cardGroup').innerHTML = '<b>' + escapeHtml(group) + '</b>';
+    $('gncLead').textContent = x.groupCardLead;
+    updateGroupCard();
     updateRemain();
+    applyReportLang();
     if (submitted) $('submittedMsg').textContent = x.submitted;
     if ($('cardWrap').style.display === 'flex' && lastDrawn !== null) renderCard();
   }
-  function escapeHtml(s){ return String(s).replace(/[&<>"']/g, (c) => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+
+  function updateGroupCard(){
+    if (online && groupNumber != null){
+      $('groupNumCard').classList.add('on');
+      $('gncNum').textContent = `${t().groupWord} ${groupNumber} · ${t().roomWord} ${groupNumber}`;
+      $('cardGroup').style.display = 'none';
+    } else {
+      $('groupNumCard').classList.remove('on');
+      $('cardGroup').style.display = 'block';
+      if (group) $('cardGroup').innerHTML = '<b>' + escapeHtml(group) + '</b>';
+    }
+  }
+
   function updateRemain(){
-    $('remain').textContent = (lastRemaining === null) ? t().reused : t().remain(lastRemaining);
+    if (online){ $('remain').textContent = t().reused; return; }
+    const total = event ? event.max_group_per_mission_card * event.missionCards.length : 0;
+    $('remain').textContent = (lastRemaining === null) ? t().reused : t().remain(lastRemaining, total);
   }
+
   function renderCard(){
-    const m = MISSIONS[lastDrawn], L = m[lang];
-    $('mTag').textContent = m.tag;
-    $('mTitle').textContent = L.title;
-    $('mArabic').textContent = m.arabic;
-    $('mTranslation').textContent = L.translation;
-    $('mPrompt').textContent = L.prompt;
-    $('mRef').textContent = m.ref;
+    const c = event.missionCards[lastDrawn];
+    if (!c) return;
+    const ms = c.mission_statement[lang] || c.mission_statement.en;
+    $('mTag').textContent = c.mission_slug;
+    $('mTitle').textContent = ms.title;
+    $('mArabic').textContent = c.ayat.arabic;
+    $('mTranslation').textContent = c.ayat.translation[lang] || c.ayat.translation.en;
+    $('mPrompt').textContent = ms.prompt;
+    $('mRef').textContent = c.ayat.ref;
   }
+
   function setLang(l){ lang = l; localStorage.setItem(LANG_KEY, l); applyLang(); }
 
+  // ----- dynamic report form -----
+  function buildReportForm(){
+    const box = $('reportFields');
+    box.innerHTML = '';
+    (event.report_summary || []).forEach((f, i) => {
+      const field = document.createElement('div');
+      field.className = 'field';
+      const label = document.createElement('label');
+      label.setAttribute('for', `fReport${i}`);
+      label.textContent = f.label;
+      const ta = document.createElement('textarea');
+      ta.id = `fReport${i}`;
+      field.appendChild(label);
+      field.appendChild(ta);
+      box.appendChild(field);
+    });
+  }
+  function applyReportLang(){
+    if (!event) return;
+    (event.report_summary || []).forEach((f, i) => {
+      const ta = $(`fReport${i}`);
+      if (ta) ta.placeholder = (f.hints && f.hints[lang]) || (f.hints && f.hints.en) || '';
+    });
+  }
+
   // ----- landing / draw -----
-  function refreshOpenBtn(){ $('openBtn').disabled = $('groupInput').value.trim().length === 0; }
+  function refreshOpenBtn(){
+    if (online) { $('openBtn').disabled = false; return; }
+    $('openBtn').disabled = $('groupInput').value.trim().length === 0;
+  }
 
   async function openMissionCard(){
-    const name = $('groupInput').value.trim();
-    if (!name){ $('landingErr').textContent = t().nameRequired; return; }
     $('landingErr').textContent = '';
+    let body;
+    if (online){
+      body = { slug, playerId: playerId() };
+    } else {
+      const name = $('groupInput').value.trim();
+      if (!name){ $('landingErr').textContent = t().nameRequired; return; }
+      body = { slug, name };
+    }
     $('openBtn').disabled = true;
     let data;
     try {
       const res = await fetch('/api/draw', {
         method:'POST', headers:{ 'Content-Type':'application/json' },
-        body: JSON.stringify({ group: name }),
+        body: JSON.stringify(body),
       });
-      if (res.status === 409){ $('landingErr').textContent = t().nameInUse; $('openBtn').disabled = false; return; }
+      if (res.status === 409 && !online){ $('landingErr').textContent = t().nameInUse; $('openBtn').disabled = false; return; }
       if (!res.ok) throw new Error('draw ' + res.status);
       data = await res.json();
     } catch (e){
       show('errWrap');
       return;
     }
-    group = name;
     lastDrawn = data.mission;
-    lastRemaining = data.remaining;
-    setClaim({ group, mission: lastDrawn, date: clientDate() });
-    $('cardGroup').innerHTML = '<b>' + escapeHtml(group) + '</b>';
+    if (online){
+      groupNumber = data.group;
+      groupKey = String(data.group);
+      group = '';
+      lastRemaining = null;
+    } else {
+      group = $('groupInput').value.trim();
+      groupKey = group;
+      lastRemaining = data.remaining;
+    }
+    setClaim({ group, groupKey, groupNumber, mission: lastDrawn, date: clientDate() });
+    updateGroupCard();
     runShuffle();
   }
 
@@ -349,6 +423,7 @@
   function openEnvelope(){
     if ($('cardWrap').style.display === 'flex') return;
     renderCard();
+    updateGroupCard();
     $('envelope').classList.add('open');
     setTimeout(() => { show('cardWrap'); }, 620);
   }
@@ -357,26 +432,23 @@
   function showDossier(){
     $('writeReportBtn').style.display = 'none';
     $('dossier').style.display = 'flex';
-    $('fReveal').focus();
+    const first = $('fReport0');
+    if (first) first.focus();
   }
   async function submitReport(){
     if (submitted) return;
     const btn = $('submitReportBtn');
     btn.disabled = true;
     $('submittedMsg').textContent = '';
+    const fields = (event.report_summary || []).map((f, i) => ($(`fReport${i}`) ? $(`fReport${i}`).value : ''));
     try {
       const res = await fetch('/api/report', {
         method:'POST', headers:{ 'Content-Type':'application/json' },
-        body: JSON.stringify({
-          group,
-          reveal: $('fReveal').value,
-          logic: $('fLogic').value,
-          action: $('fAction').value,
-        }),
+        body: JSON.stringify({ slug, groupKey, fields }),
       });
       if (!res.ok) throw new Error('report ' + res.status);
       submitted = true;
-      for (const id of ['fReveal','fLogic','fAction']) $(id).disabled = true;
+      (event.report_summary || []).forEach((f, i) => { const ta = $(`fReport${i}`); if (ta) ta.disabled = true; });
       $('submittedMsg').textContent = t().submitted;
     } catch (e){
       $('submittedMsg').textContent = t().submitError;
@@ -385,21 +457,50 @@
   }
 
   // ----- boot -----
-  function boot(){
+  function startFromClaim(claim){
+    group = claim.group || '';
+    groupKey = claim.groupKey || group;
+    groupNumber = claim.groupNumber != null ? claim.groupNumber : null;
+    lastDrawn = claim.mission;
+    lastRemaining = null;
+    updateGroupCard();
+    show('shuffle','caption');
+    $('envelope').classList.remove('open');
+    setTimeout(() => { updateRemain(); show('envWrap'); }, SHUFFLE_MS);
+  }
+
+  async function boot(){
+    // load the event config
+    try {
+      const res = await fetch('/api/event?slug=' + encodeURIComponent(slug));
+      if (res.status === 404){ showNoEvent(); return; }
+      if (!res.ok) throw new Error('event ' + res.status);
+      const data = await res.json();
+      event = data.event;
+      online = event.player_per_group > 1;
+    } catch (e){
+      show('errWrap');
+      return;
+    }
+    buildReportForm();
+    applyLang();
+
     const claim = getClaim();
-    if (claim && claim.group && claim.mission != null && claim.date === clientDate()){
-      // same device, same day: reuse, no new draw
-      group = claim.group;
-      lastDrawn = claim.mission;
-      lastRemaining = null;
-      $('cardGroup').innerHTML = '<b>' + escapeHtml(group) + '</b>';
-      show('shuffle','caption');
-      $('envelope').classList.remove('open');
-      setTimeout(() => { updateRemain(); show('envWrap'); }, SHUFFLE_MS);
+    if (claim && claim.mission != null && claim.date === clientDate()){
+      startFromClaim(claim);
     } else {
+      // online mode has no text input; hide it
+      $('groupInput').style.display = online ? 'none' : 'block';
       show('landing');
       refreshOpenBtn();
     }
+  }
+
+  function showNoEvent(){
+    $('errTitle').textContent = t().noEventTitle;
+    $('errBody').textContent = t().noEventBody;
+    $('btnRetry').style.display = 'none';
+    show('errWrap');
   }
 
   // ----- wire up -----
@@ -412,9 +513,8 @@
   $('envelope').addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' '){ e.preventDefault(); openEnvelope(); } });
   $('writeReportBtn').addEventListener('click', showDossier);
   $('submitReportBtn').addEventListener('click', submitReport);
-  $('btnRetry').addEventListener('click', boot);
+  $('btnRetry').addEventListener('click', () => { $('btnRetry').style.display = ''; boot(); });
 
-  applyLang();
   boot();
 </script>
 </body>
