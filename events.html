@@ -40,6 +40,12 @@
 
   .panel{background:rgba(255,255,255,.06); border:1px solid rgba(172,181,154,.35); border-radius:16px; padding:18px 18px 20px; margin-bottom:18px}
   .panel h2{font-size:13px; letter-spacing:2px; text-transform:uppercase; color:var(--sage); margin-bottom:14px}
+  /* collapsible sections */
+  .panel.collapsible > h2{cursor:pointer; user-select:none; margin-bottom:14px}
+  .panel.collapsible.collapsed > h2{margin-bottom:0}
+  .panel.collapsible > h2::before{content:"▾"; display:inline-block; width:1.2em; color:var(--tan)}
+  .panel.collapsible.collapsed > h2::before{content:"▸"}
+  .panel.collapsible.collapsed .panel-body{display:none}
   .row{display:flex; gap:14px; flex-wrap:wrap}
   .fld{display:flex; flex-direction:column; gap:5px; margin-bottom:12px; flex:1 1 200px}
   .fld.full{flex-basis:100%}
@@ -53,8 +59,16 @@
   input.bad{border-color:#e08a6f}
 
   .card{background:rgba(0,0,0,.14); border:1px solid rgba(172,181,154,.28); border-radius:14px; padding:14px 14px 6px; margin-bottom:14px}
-  .card .card-head{display:flex; align-items:center; justify-content:space-between; gap:10px; margin-bottom:10px}
-  .card .card-head .idx{font-size:11px; letter-spacing:2px; text-transform:uppercase; color:var(--tan); font-weight:700}
+  .card .card-head{display:flex; align-items:center; gap:10px; margin-bottom:10px; cursor:pointer; user-select:none}
+  .card.collapsed .card-head{margin-bottom:0}
+  .card.collapsed{padding-bottom:14px}
+  .card .card-head .idx{font-size:11px; letter-spacing:2px; text-transform:uppercase; color:var(--tan); font-weight:700; white-space:nowrap}
+  .card .card-head .idx::before{content:"▾"; display:inline-block; width:1.2em; color:var(--tan)}
+  .card.collapsed .card-head .idx::before{content:"▸"}
+  .card .card-head .summary{flex:1; min-width:0; font-size:12px; color:var(--sage); font-weight:400; text-transform:none; letter-spacing:0;
+    white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
+  .card .card-head [data-rm]{flex:none}
+  .card.collapsed .card-body{display:none}
   .subhead{font-size:10px; letter-spacing:1px; text-transform:uppercase; color:var(--tan); margin:6px 0 8px}
   .ayat-preview{font-size:13px; color:var(--sage); min-height:1em; margin-top:4px; word-break:break-word}
 
@@ -119,16 +133,20 @@
           <div class="playerlink" id="playerLink"></div>
         </div>
 
-        <div class="panel">
+        <div class="panel collapsible collapsed">
           <h2>Report summary fields (whole event)</h2>
-          <div id="reportList"></div>
-          <button class="btn btn-ghost btn-sm" id="addFieldBtn">+ Add field</button>
+          <div class="panel-body">
+            <div id="reportList"></div>
+            <button class="btn btn-ghost btn-sm" id="addFieldBtn">+ Add field</button>
+          </div>
         </div>
 
-        <div class="panel">
+        <div class="panel collapsible collapsed">
           <h2>Mission cards</h2>
-          <div id="cardList"></div>
-          <button class="btn btn-ghost btn-sm" id="addCardBtn">+ Add mission card</button>
+          <div class="panel-body">
+            <div id="cardList"></div>
+            <button class="btn btn-ghost btn-sm" id="addCardBtn">+ Add mission card</button>
+          </div>
         </div>
 
         <div class="savebar">
@@ -249,6 +267,8 @@
     $('fTitle').value = draft.title;
     $('fPPG').value = draft.player_per_group;
     $('fCap').value = draft.max_group_per_mission_card;
+    // sections start collapsed on every event load
+    document.querySelectorAll('.panel.collapsible').forEach((p) => p.classList.add('collapsed'));
     validateSlug();
     updatePlayerLink();
     renderReportFields();
@@ -277,21 +297,31 @@
   function renderReportFields(){
     const box = $('reportList'); box.innerHTML = '';
     draft.report_summary.forEach((f, i) => {
-      const card = document.createElement('div'); card.className = 'card';
+      const card = document.createElement('div'); card.className = 'card' + (f._open ? '' : ' collapsed');
       card.innerHTML = `
         <div class="card-head"><span class="idx">Field ${i+1}</span>
+          <span class="summary">${esc(f.label||'(untitled)')}</span>
           <button class="btn btn-danger btn-sm" data-rm="${i}">Remove</button></div>
-        <div class="fld full"><label>Label</label><input data-f="label" data-i="${i}" value="${attr(f.label)}" placeholder="The Reveal"></div>
-        <div class="row">
-          <div class="fld"><label>Hint (EN)</label><textarea data-f="hen" data-i="${i}" placeholder="The most surprising finding…">${esc(f.hints?.en||'')}</textarea></div>
-          <div class="fld"><label>Hint (ID)</label><textarea data-f="hid" data-i="${i}" placeholder="Temuan paling mengejutkan…">${esc(f.hints?.id||'')}</textarea></div>
+        <div class="card-body">
+          <div class="fld full"><label>Label</label><input data-f="label" data-i="${i}" value="${attr(f.label)}" placeholder="The Reveal"></div>
+          <div class="row">
+            <div class="fld"><label>Hint (EN)</label><textarea data-f="hen" data-i="${i}" placeholder="The most surprising finding…">${esc(f.hints?.en||'')}</textarea></div>
+            <div class="fld"><label>Hint (ID)</label><textarea data-f="hid" data-i="${i}" placeholder="Temuan paling mengejutkan…">${esc(f.hints?.id||'')}</textarea></div>
+          </div>
         </div>`;
       box.appendChild(card);
+    });
+    box.querySelectorAll('.card').forEach((el, i) => {
+      el.querySelector('.card-head').addEventListener('click', (e) => {
+        if (e.target.closest('[data-rm]')) return;
+        draft.report_summary[i]._open = !draft.report_summary[i]._open;
+        el.classList.toggle('collapsed');
+      });
     });
     box.querySelectorAll('[data-rm]').forEach((b) => b.addEventListener('click', () => { draft.report_summary.splice(+b.dataset.rm,1); renderReportFields(); }));
     box.querySelectorAll('[data-f]').forEach((el) => el.addEventListener('input', () => {
       const i = +el.dataset.i, f = draft.report_summary[i];
-      if (el.dataset.f==='label') f.label = el.value;
+      if (el.dataset.f==='label'){ f.label = el.value; el.closest('.card').querySelector('.summary').textContent = el.value || '(untitled)'; }
       else { f.hints = f.hints || {en:'',id:''}; if (el.dataset.f==='hen') f.hints.en = el.value; else f.hints.id = el.value; }
     }));
   }
@@ -303,10 +333,13 @@
   function renderCards(){
     const box = $('cardList'); box.innerHTML = '';
     draft.missionCards.forEach((c, i) => {
-      const card = document.createElement('div'); card.className = 'card';
+      const card = document.createElement('div'); card.className = 'card' + (c._open ? '' : ' collapsed');
+      const summary = (c.mission_slug || '(no label)') + (c.ayat?.ref || c.ayat_slug ? ' · ' + (c.ayat?.ref || c.ayat_slug) : '');
       card.innerHTML = `
         <div class="card-head"><span class="idx">Mission card ${i+1}</span>
+          <span class="summary">${esc(summary)}</span>
           <button class="btn btn-danger btn-sm" data-rm="${i}">Remove</button></div>
+        <div class="card-body">
         <div class="fld full"><label>Mission label</label><input data-c="mslug" data-i="${i}" value="${attr(c.mission_slug)}" placeholder="Mission 01"></div>
         <div class="subhead">Ayat</div>
         <div class="row">
@@ -331,8 +364,17 @@
         <div class="row">
           <div class="fld"><label>Prompt (EN)</label><textarea data-c="men_p" data-i="${i}">${esc(c.mission_statement?.en?.prompt||'')}</textarea></div>
           <div class="fld"><label>Prompt (ID)</label><textarea data-c="mid_p" data-i="${i}">${esc(c.mission_statement?.id?.prompt||'')}</textarea></div>
+        </div>
         </div>`;
       box.appendChild(card);
+    });
+    // collapse toggle (head click, but not the Remove button)
+    box.querySelectorAll('.card').forEach((el, i) => {
+      el.querySelector('.card-head').addEventListener('click', (e) => {
+        if (e.target.closest('[data-rm]')) return;
+        draft.missionCards[i]._open = !draft.missionCards[i]._open;
+        el.classList.toggle('collapsed');
+      });
     });
     // remove
     box.querySelectorAll('[data-rm]').forEach((b) => b.addEventListener('click', () => { draft.missionCards.splice(+b.dataset.rm,1); renderCards(); }));
@@ -343,7 +385,9 @@
       const i = +el.dataset.i, c = draft.missionCards[i], k = el.dataset.c;
       c.ayat = c.ayat || { ref:'', arabic:'', translation:{en:'',id:''} };
       c.mission_statement = c.mission_statement || { en:{title:'',prompt:''}, id:{title:'',prompt:''} };
-      if (k==='mslug') c.mission_slug = el.value;
+      if (k==='mslug'){ c.mission_slug = el.value;
+        const sm = el.closest('.card').querySelector('.summary');
+        sm.textContent = (el.value || '(no label)') + (c.ayat?.ref || c.ayat_slug ? ' · ' + (c.ayat?.ref || c.ayat_slug) : ''); }
       else if (k==='surah') c._surah = +el.value;
       else if (k==='start') c._start = el.value;
       else if (k==='end') c._end = el.value;
@@ -375,8 +419,8 @@
     }
   }
 
-  function addField(){ draft.report_summary.push({ label:'', hints:{en:'',id:''} }); renderReportFields(); }
-  function addCard(){ draft.missionCards.push(hydrateCard({ mission_slug:'', ayat_slug:'96.Al-Alaq: 1' })); renderCards(); }
+  function addField(){ draft.report_summary.push({ label:'', hints:{en:'',id:''}, _open:true }); renderReportFields(); }
+  function addCard(){ const c = hydrateCard({ mission_slug:'', ayat_slug:'96.Al-Alaq: 1' }); c._open = true; draft.missionCards.push(c); renderCards(); }
 
   async function save(){
     $('saveMsg').className = 'errline'; $('saveMsg').textContent = '';
@@ -387,10 +431,11 @@
     if (!isValidEventSlug(draft.event_slug)){ $('saveMsg').textContent = 'Fix the event slug first.'; return; }
     // build ayat_slug per card from its pickers
     const payload = JSON.parse(JSON.stringify(draft));
+    (payload.report_summary || []).forEach((f) => { delete f._open; });
     payload.missionCards.forEach((c) => {
       c.ayat_slug = buildAyatSlug(c._surah, c._start, c._end);
       c.ayat = c.ayat || {}; c.ayat.ref = c.ayat.ref || formatRef(c.ayat_slug);
-      delete c._surah; delete c._start; delete c._end;
+      delete c._surah; delete c._start; delete c._end; delete c._open;
     });
     const btn = $('saveBtn'); btn.disabled = true;
     try {
@@ -438,6 +483,9 @@
   $('addFieldBtn').addEventListener('click', addField);
   $('addCardBtn').addEventListener('click', addCard);
   $('saveBtn').addEventListener('click', save);
+  // collapsible section headers
+  document.querySelectorAll('.panel.collapsible > h2').forEach((h) =>
+    h.addEventListener('click', () => h.parentElement.classList.toggle('collapsed')));
 
   tryStoredLogin();
 </script>
