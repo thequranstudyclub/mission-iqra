@@ -377,12 +377,13 @@
   async function openMissionCard(){
     $('landingErr').textContent = '';
     let body;
+    let enteredName = '';
     if (online){
       body = { slug, playerId: playerId() };
     } else {
-      const name = $('groupInput').value.trim();
-      if (!name){ $('landingErr').textContent = t().nameRequired; return; }
-      body = { slug, name };
+      enteredName = $('groupInput').value.trim();
+      if (!enteredName){ $('landingErr').textContent = t().nameRequired; return; }
+      body = { slug, name: enteredName };
     }
     $('openBtn').disabled = true;
     let data;
@@ -405,7 +406,7 @@
       group = '';
       lastRemaining = null;
     } else {
-      group = $('groupInput').value.trim();
+      group = enteredName;
       groupKey = group;
       lastRemaining = data.remaining;
     }

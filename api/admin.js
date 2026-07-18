@@ -90,7 +90,12 @@ export default async function handler(req, res) {
           const data = await fetchAyat((body.ayat_slug || "").toString());
           res.status(200).json(data);
         } catch (e) {
-          res.status(400).json({ error: "invalid_ayat_slug" });
+          // Bad slug is caller error (400); an upstream Quran API failure is 502.
+          if (e && e.message === "invalid_ayat_slug") {
+            res.status(400).json({ error: "invalid_ayat_slug" });
+          } else {
+            res.status(502).json({ error: "ayat_fetch_failed" });
+          }
           return;
         }
         return;

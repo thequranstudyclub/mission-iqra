@@ -37,6 +37,10 @@ export default async function handler(req, res) {
         res.status(400).json({ error: "player_id_required" });
         return;
       }
+      if (playerId.length > 100) {
+        res.status(400).json({ error: "player_id_too_long" });
+        return;
+      }
       const result = await joinOnline({ slug, playerId, cfg, date: today() });
       res.status(200).json({ group: result.group, mission: result.mission });
       return;

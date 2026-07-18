@@ -23,6 +23,10 @@ export default async function handler(req, res) {
     res.status(400).json({ error: "group_required" });
     return;
   }
+  if (groupKey.length > 50) {
+    res.status(400).json({ error: "group_too_long" });
+    return;
+  }
   try {
     const cfg = await getEventConfig(slug);
     if (!cfg) {
@@ -32,6 +36,12 @@ export default async function handler(req, res) {
     const online = cfg.player_per_group > 1;
     const date = today();
     const mission = await getGroupCard({ slug, date, groupKey, online });
+    // Reject reports for groups that never drew a card (no lock) — avoids
+    // polluting the reports hash with arbitrary group keys.
+    if (mission == null) {
+      res.status(409).json({ error: "no_drawn_mission" });
+      return;
+    }
     const card = mission != null ? cfg.missionCards[mission] : null;
     const ref = card ? card.ayat.ref : null;
 
