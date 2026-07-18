@@ -166,6 +166,7 @@
       if (res.status === 401){ $('loginErr').textContent = 'Wrong password.'; pw = ''; return; }
       if (res.status === 500){ $('loginErr').textContent = 'Admin password not configured on the server.'; pw = ''; return; }
       if (!res.ok) throw new Error('admin ' + res.status);
+      sessionStorage.setItem('qsc_admin_pw', pw);
       const data = await res.json();
       populateList(data.events || []);
       $('login').style.display = 'none';
@@ -175,6 +176,26 @@
       pw = '';
     } finally {
       $('loginBtn').disabled = false;
+    }
+  }
+
+  // Skip the login screen when arriving from the (already password-gated) admin
+  // page, which stored the password in sessionStorage. Validate it once; on any
+  // failure, drop it and fall back to the manual login.
+  async function tryStoredLogin(){
+    const stored = sessionStorage.getItem('qsc_admin_pw');
+    if (!stored) return;
+    pw = stored;
+    try {
+      const res = await adminPost('listEvents');
+      if (!res.ok) throw new Error('admin ' + res.status);
+      const data = await res.json();
+      populateList(data.events || []);
+      $('login').style.display = 'none';
+      $('app').style.display = 'block';
+    } catch (e){
+      sessionStorage.removeItem('qsc_admin_pw');
+      pw = '';
     }
   }
 
@@ -417,6 +438,8 @@
   $('addFieldBtn').addEventListener('click', addField);
   $('addCardBtn').addEventListener('click', addCard);
   $('saveBtn').addEventListener('click', save);
+
+  tryStoredLogin();
 </script>
 </body>
 </html>

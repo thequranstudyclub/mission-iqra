@@ -189,6 +189,9 @@
       if (res.status === 401){ $('loginErr').textContent = 'Wrong password.'; pw = ''; return; }
       if (res.status === 500){ $('loginErr').textContent = 'Admin password not configured on the server.'; pw = ''; return; }
       if (!res.ok) throw new Error('admin ' + res.status);
+      // Share the (validated) password with the Manage GameEvents page so it
+      // doesn't prompt again. sessionStorage: same-origin, cleared on tab close.
+      sessionStorage.setItem('qsc_admin_pw', pw);
       const data = await res.json();
       const events = data.events || [];
       const sel = $('eventSel');
