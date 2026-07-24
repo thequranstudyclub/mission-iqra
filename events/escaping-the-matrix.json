@@ -1,0 +1,163 @@
+{
+  "event_slug": "escaping-the-matrix",
+  "title": "QSC × HIMMAH — Escaping the Matrix",
+  "player_per_group": 1,
+  "max_group_per_mission_card": 5,
+  "report_summary": [
+    {
+      "label": "The Reveal",
+      "hints": {
+        "en": "The most surprising or interesting finding from your ayat",
+        "id": "Temuan paling mengejutkan atau menarik dari ayat kamu"
+      }
+    },
+    {
+      "label": "The Logic",
+      "hints": {
+        "en": "The reasoning behind your finding",
+        "id": "Alasan logis di balik temuan kamu"
+      }
+    },
+    {
+      "label": "The Action",
+      "hints": {
+        "en": "One concrete step or mindset shift you will take this week",
+        "id": "Satu langkah nyata atau perubahan mindset yang bakal kamu ambil minggu ini"
+      }
+    }
+  ],
+  "missionCards": [
+    {
+      "mission_slug": "Mission 01",
+      "ayat_slug": "57.Al-Hadid: 20",
+      "ayat": {
+        "ref": "QS. Al-Hadid: 20",
+        "arabic": "ٱعْلَمُوٓا۟ أَنَّمَا ٱلْحَيَوٰةُ ٱلدُّنْيَا لَعِبٌۭ وَلَهْوٌۭ وَزِينَةٌۭ وَتَفَاخُرٌۢ بَيْنَكُمْ وَتَكَاثُرٌۭ فِى ٱلْأَمْوَٰلِ وَٱلْأَوْلَٰدِ ۖ كَمَثَلِ غَيْثٍ أَعْجَبَ ٱلْكُفَّارَ نَبَاتُهُۥ ثُمَّ يَهِيجُ فَتَرَىٰهُ مُصْفَرًّۭا ثُمَّ يَكُونُ حُطَٰمًۭا ۖ وَفِى ٱلْءَاخِرَةِ عَذَابٌۭ شَدِيدٌۭ وَمَغْفِرَةٌۭ مِّنَ ٱللَّهِ وَرِضْوَٰنٌۭ ۚ وَمَا ٱلْحَيَوٰةُ ٱلدُّنْيَآ إِلَّا مَتَٰعُ ٱلْغُرُورِ",
+        "translation": {
+          "en": "Know that the life of this world is but amusement and diversion and adornment and boasting to one another and competition in increase of wealth and children - like the example of a rain whose [resulting] plant growth pleases the tillers; then it dries and you see it turned yellow; then it becomes [scattered] debris. And in the Hereafter is severe punishment and forgiveness from Allah and approval. And what is the worldly life except the enjoyment of delusion.",
+          "id": "Ketahuilah, bahwa sesungguhnya kehidupan dunia ini hanyalah permainan dan suatu yang melalaikan, perhiasan dan bermegah-megah antara kamu serta berbangga-banggaan tentang banyaknya harta dan anak, seperti hujan yang tanam-tanamannya mengagumkan para petani; kemudian tanaman itu menjadi kering dan kamu lihat warnanya kuning kemudian menjadi hancur. Dan di akhirat (nanti) ada azab yang keras dan ampunan dari Allah serta keridhaan-Nya. Dan kehidupan dunia ini tidak lain hanyalah kesenangan yang menipu."
+        }
+      },
+      "mission_statement": {
+        "en": {
+          "title": "The Level You're Stuck On",
+          "prompt": "Ibn Ashur read these five words (play, amusement, looks, boasting, piling up) as the stages of a whole lifetime. Which of the five has the tightest grip on you right now? As a group, what would actually change this week if you held that one a little looser?"
+        },
+        "id": {
+          "title": "Lo Lagi di Level Berapa?",
+          "prompt": "Menurut Ibnu 'Asyur, lima kata ini (main, hiburan, penampilan, pamer, numpuk) itu fase-fase umur manusia. Dari kelima itu, mana yang paling nyengkeram kalian sekarang? Bareng-bareng, kira-kira apa yang beneran berubah minggu ini kalau genggaman ke hal itu dilonggarin dikit?"
+        }
+      }
+    },
+    {
+      "mission_slug": "Mission 02",
+      "ayat_slug": "57.Al-Hadid: 20",
+      "ayat": {
+        "ref": "QS. Al-Hadid: 20",
+        "arabic": "ٱعْلَمُوٓا۟ أَنَّمَا ٱلْحَيَوٰةُ ٱلدُّنْيَا لَعِبٌۭ وَلَهْوٌۭ وَزِينَةٌۭ وَتَفَاخُرٌۢ بَيْنَكُمْ وَتَكَاثُرٌۭ فِى ٱلْأَمْوَٰلِ وَٱلْأَوْلَٰدِ ۖ كَمَثَلِ غَيْثٍ أَعْجَبَ ٱلْكُفَّارَ نَبَاتُهُۥ ثُمَّ يَهِيجُ فَتَرَىٰهُ مُصْفَرًّۭا ثُمَّ يَكُونُ حُطَٰمًۭا ۖ وَفِى ٱلْءَاخِرَةِ عَذَابٌۭ شَدِيدٌۭ وَمَغْفِرَةٌۭ مِّنَ ٱللَّهِ وَرِضْوَٰنٌۭ ۚ وَمَا ٱلْحَيَوٰةُ ٱلدُّنْيَآ إِلَّا مَتَٰعُ ٱلْغُرُورِ",
+        "translation": {
+          "en": "Know that the life of this world is but amusement and diversion and adornment and boasting to one another and competition in increase of wealth and children - like the example of a rain whose [resulting] plant growth pleases the tillers; then it dries and you see it turned yellow; then it becomes [scattered] debris. And in the Hereafter is severe punishment and forgiveness from Allah and approval. And what is the worldly life except the enjoyment of delusion.",
+          "id": "Ketahuilah, bahwa sesungguhnya kehidupan dunia ini hanyalah permainan dan suatu yang melalaikan, perhiasan dan bermegah-megah antara kamu serta berbangga-banggaan tentang banyaknya harta dan anak, seperti hujan yang tanam-tanamannya mengagumkan para petani; kemudian tanaman itu menjadi kering dan kamu lihat warnanya kuning kemudian menjadi hancur. Dan di akhirat (nanti) ada azab yang keras dan ampunan dari Allah serta keridhaan-Nya. Dan kehidupan dunia ini tidak lain hanyalah kesenangan yang menipu."
+        }
+      },
+      "mission_statement": {
+        "en": {
+          "title": "Your Own Matrix",
+          "prompt": "The verse closes by calling worldly life `mata'ul ghurur`, the enjoyment of delusion: something that looks solid but is really just a display. Being honest with each other, what is the one 'display' you keep treating as real, the thing you'd feel lost without? Talk through why it feels so convincing."
+        },
+        "id": {
+          "title": "Matrix Versi Kamu",
+          "prompt": "Ayat ini nutup dengan nyebut hidup dunia sebagai `mata'ul ghurur`, kesenangan yang menipu: sesuatu yang keliatan solid padahal cuma tampilan. Jujur-jujuran bareng, apa satu 'tampilan' yang selama ini kalian anggap paling nyata, yang bikin ngerasa kosong kalau kehilangan dia? Bahas kenapa dia berasa se-meyakinkan itu."
+        }
+      }
+    },
+    {
+      "mission_slug": "Mission 03",
+      "ayat_slug": "57.Al-Hadid: 20",
+      "ayat": {
+        "ref": "QS. Al-Hadid: 20",
+        "arabic": "ٱعْلَمُوٓا۟ أَنَّمَا ٱلْحَيَوٰةُ ٱلدُّنْيَا لَعِبٌۭ وَلَهْوٌۭ وَزِينَةٌۭ وَتَفَاخُرٌۢ بَيْنَكُمْ وَتَكَاثُرٌۭ فِى ٱلْأَمْوَٰلِ وَٱلْأَوْلَٰدِ ۖ كَمَثَلِ غَيْثٍ أَعْجَبَ ٱلْكُفَّارَ نَبَاتُهُۥ ثُمَّ يَهِيجُ فَتَرَىٰهُ مُصْفَرًّۭا ثُمَّ يَكُونُ حُطَٰمًۭا ۖ وَفِى ٱلْءَاخِرَةِ عَذَابٌۭ شَدِيدٌۭ وَمَغْفِرَةٌۭ مِّنَ ٱللَّهِ وَرِضْوَٰنٌۭ ۚ وَمَا ٱلْحَيَوٰةُ ٱلدُّنْيَآ إِلَّا مَتَٰعُ ٱلْغُرُورِ",
+        "translation": {
+          "en": "Know that the life of this world is but amusement and diversion and adornment and boasting to one another and competition in increase of wealth and children - like the example of a rain whose [resulting] plant growth pleases the tillers; then it dries and you see it turned yellow; then it becomes [scattered] debris. And in the Hereafter is severe punishment and forgiveness from Allah and approval. And what is the worldly life except the enjoyment of delusion.",
+          "id": "Ketahuilah, bahwa sesungguhnya kehidupan dunia ini hanyalah permainan dan suatu yang melalaikan, perhiasan dan bermegah-megah antara kamu serta berbangga-banggaan tentang banyaknya harta dan anak, seperti hujan yang tanam-tanamannya mengagumkan para petani; kemudian tanaman itu menjadi kering dan kamu lihat warnanya kuning kemudian menjadi hancur. Dan di akhirat (nanti) ada azab yang keras dan ampunan dari Allah serta keridhaan-Nya. Dan kehidupan dunia ini tidak lain hanyalah kesenangan yang menipu."
+        }
+      },
+      "mission_statement": {
+        "en": {
+          "title": "The Green That Died",
+          "prompt": "In this verse Allah pictures the world as a crop that thrills the farmer, then yellows and dies. A few ayat earlier (16) He warned believers not to let their hearts harden like the people before them. As a group, what is the link between a heart going numb and a life spent chasing things that always end up as dry stubble? What do you think keeps a heart soft enough to notice before the field dries out?"
+        },
+        "id": {
+          "title": "Hijau yang Mati",
+          "prompt": "Di ayat ini Allah ngegambarin dunia kayak tanaman yang bikin petani seneng, terus menguning dan mati. Beberapa ayat sebelumnya (ayat 16), Allah negur orang beriman biar hatinya nggak mengeras kayak umat sebelumnya. Bareng-bareng, apa hubungannya antara hati yang mati rasa sama hidup yang habis buat ngejar hal yang ujungnya jadi jerami kering? Menurut kalian, apa yang bikin hati tetap lembut biar sadar sebelum ladangnya keburu kering?"
+        }
+      }
+    },
+    {
+      "mission_slug": "Mission 04",
+      "ayat_slug": "57.Al-Hadid: 20",
+      "ayat": {
+        "ref": "QS. Al-Hadid: 20",
+        "arabic": "ٱعْلَمُوٓا۟ أَنَّمَا ٱلْحَيَوٰةُ ٱلدُّنْيَا لَعِبٌۭ وَلَهْوٌۭ وَزِينَةٌۭ وَتَفَاخُرٌۢ بَيْنَكُمْ وَتَكَاثُرٌۭ فِى ٱلْأَمْوَٰلِ وَٱلْأَوْلَٰدِ ۖ كَمَثَلِ غَيْثٍ أَعْجَبَ ٱلْكُفَّارَ نَبَاتُهُۥ ثُمَّ يَهِيجُ فَتَرَىٰهُ مُصْفَرًّۭا ثُمَّ يَكُونُ حُطَٰمًۭا ۖ وَفِى ٱلْءَاخِرَةِ عَذَابٌۭ شَدِيدٌۭ وَمَغْفِرَةٌۭ مِّنَ ٱللَّهِ وَرِضْوَٰنٌۭ ۚ وَمَا ٱلْحَيَوٰةُ ٱلدُّنْيَآ إِلَّا مَتَٰعُ ٱلْغُرُورِ",
+        "translation": {
+          "en": "Know that the life of this world is but amusement and diversion and adornment and boasting to one another and competition in increase of wealth and children - like the example of a rain whose [resulting] plant growth pleases the tillers; then it dries and you see it turned yellow; then it becomes [scattered] debris. And in the Hereafter is severe punishment and forgiveness from Allah and approval. And what is the worldly life except the enjoyment of delusion.",
+          "id": "Ketahuilah, bahwa sesungguhnya kehidupan dunia ini hanyalah permainan dan suatu yang melalaikan, perhiasan dan bermegah-megah antara kamu serta berbangga-banggaan tentang banyaknya harta dan anak, seperti hujan yang tanam-tanamannya mengagumkan para petani; kemudian tanaman itu menjadi kering dan kamu lihat warnanya kuning kemudian menjadi hancur. Dan di akhirat (nanti) ada azab yang keras dan ampunan dari Allah serta keridhaan-Nya. Dan kehidupan dunia ini tidak lain hanyalah kesenangan yang menipu."
+        }
+      },
+      "mission_statement": {
+        "en": {
+          "title": "Allah's Caption vs the Timeline",
+          "prompt": "Your feed keeps selling one message: level up, glow up, secure the bag, soft life. This verse gives the world a different caption: play, amusement, adornment, boasting, piling up. Put the two side by side. Where does the timeline's message actually agree with the ayah, and where does it flat-out clash? Argue it out as a group."
+        },
+        "id": {
+          "title": "Caption dari Allah vs Timeline",
+          "prompt": "Timeline kalian jualan satu pesan terus: naik level, glow up, kejar cuan, soft life. Ayat ini ngasih caption yang beda buat dunia: main, hiburan, penampilan, pamer, numpuk. Coba sandingin dua-duanya. Di mana pesan timeline sebenernya sejalan sama ayat ini, dan di mana dia bertabrakan total? Debatin bareng."
+        }
+      }
+    },
+    {
+      "mission_slug": "Mission 05",
+      "ayat_slug": "57.Al-Hadid: 20",
+      "ayat": {
+        "ref": "QS. Al-Hadid: 20",
+        "arabic": "ٱعْلَمُوٓا۟ أَنَّمَا ٱلْحَيَوٰةُ ٱلدُّنْيَا لَعِبٌۭ وَلَهْوٌۭ وَزِينَةٌۭ وَتَفَاخُرٌۢ بَيْنَكُمْ وَتَكَاثُرٌۭ فِى ٱلْأَمْوَٰلِ وَٱلْأَوْلَٰدِ ۖ كَمَثَلِ غَيْثٍ أَعْجَبَ ٱلْكُفَّارَ نَبَاتُهُۥ ثُمَّ يَهِيجُ فَتَرَىٰهُ مُصْفَرًّۭا ثُمَّ يَكُونُ حُطَٰمًۭا ۖ وَفِى ٱلْءَاخِرَةِ عَذَابٌۭ شَدِيدٌۭ وَمَغْفِرَةٌۭ مِّنَ ٱللَّهِ وَرِضْوَٰنٌۭ ۚ وَمَا ٱلْحَيَوٰةُ ٱلدُّنْيَآ إِلَّا مَتَٰعُ ٱلْغُرُورِ",
+        "translation": {
+          "en": "Know that the life of this world is but amusement and diversion and adornment and boasting to one another and competition in increase of wealth and children - like the example of a rain whose [resulting] plant growth pleases the tillers; then it dries and you see it turned yellow; then it becomes [scattered] debris. And in the Hereafter is severe punishment and forgiveness from Allah and approval. And what is the worldly life except the enjoyment of delusion.",
+          "id": "Ketahuilah, bahwa sesungguhnya kehidupan dunia ini hanyalah permainan dan suatu yang melalaikan, perhiasan dan bermegah-megah antara kamu serta berbangga-banggaan tentang banyaknya harta dan anak, seperti hujan yang tanam-tanamannya mengagumkan para petani; kemudian tanaman itu menjadi kering dan kamu lihat warnanya kuning kemudian menjadi hancur. Dan di akhirat (nanti) ada azab yang keras dan ampunan dari Allah serta keridhaan-Nya. Dan kehidupan dunia ini tidak lain hanyalah kesenangan yang menipu."
+        }
+      },
+      "mission_statement": {
+        "en": {
+          "title": "The Bridge Test",
+          "prompt": "Right after calling the world a delusion, the same verse names what lasts: forgiveness and Allah's pleasure. Imam As-Sa'di said the world is a bridge to cross, not a house to live in. Each of you pick one real decision you face this week (a purchase, a post, a relationship, a goal) and run it through one test: does this help me cross the bridge, or am I trying to move in? Share what the test changes."
+        },
+        "id": {
+          "title": "Tes Jembatan",
+          "prompt": "Tepat setelah nyebut dunia itu tipuan, ayat yang sama nyebut apa yang kekal: ampunan dan ridha Allah. Kata Imam As-Sa'di, dunia itu jembatan buat dilewatin, bukan rumah buat ditinggalin. Masing-masing pilih satu keputusan nyata yang kalian hadapi minggu ini (mau beli sesuatu, mau posting, hubungan, target), terus uji pakai satu pertanyaan: ini bantu aku nyebrang jembatan, atau aku lagi berusaha pindah rumah ke situ? Ceritain apa yang berubah abis diuji."
+        }
+      }
+    },
+    {
+      "mission_slug": "Mission 06",
+      "ayat_slug": "57.Al-Hadid: 20",
+      "ayat": {
+        "ref": "QS. Al-Hadid: 20",
+        "arabic": "ٱعْلَمُوٓا۟ أَنَّمَا ٱلْحَيَوٰةُ ٱلدُّنْيَا لَعِبٌۭ وَلَهْوٌۭ وَزِينَةٌۭ وَتَفَاخُرٌۢ بَيْنَكُمْ وَتَكَاثُرٌۭ فِى ٱلْأَمْوَٰلِ وَٱلْأَوْلَٰدِ ۖ كَمَثَلِ غَيْثٍ أَعْجَبَ ٱلْكُفَّارَ نَبَاتُهُۥ ثُمَّ يَهِيجُ فَتَرَىٰهُ مُصْفَرًّۭا ثُمَّ يَكُونُ حُطَٰمًۭا ۖ وَفِى ٱلْءَاخِرَةِ عَذَابٌۭ شَدِيدٌۭ وَمَغْفِرَةٌۭ مِّنَ ٱللَّهِ وَرِضْوَٰنٌۭ ۚ وَمَا ٱلْحَيَوٰةُ ٱلدُّنْيَآ إِلَّا مَتَٰعُ ٱلْغُرُورِ",
+        "translation": {
+          "en": "Know that the life of this world is but amusement and diversion and adornment and boasting to one another and competition in increase of wealth and children - like the example of a rain whose [resulting] plant growth pleases the tillers; then it dries and you see it turned yellow; then it becomes [scattered] debris. And in the Hereafter is severe punishment and forgiveness from Allah and approval. And what is the worldly life except the enjoyment of delusion.",
+          "id": "Ketahuilah, bahwa sesungguhnya kehidupan dunia ini hanyalah permainan dan suatu yang melalaikan, perhiasan dan bermegah-megah antara kamu serta berbangga-banggaan tentang banyaknya harta dan anak, seperti hujan yang tanam-tanamannya mengagumkan para petani; kemudian tanaman itu menjadi kering dan kamu lihat warnanya kuning kemudian menjadi hancur. Dan di akhirat (nanti) ada azab yang keras dan ampunan dari Allah serta keridhaan-Nya. Dan kehidupan dunia ini tidak lain hanyalah kesenangan yang menipu."
+        }
+      },
+      "mission_statement": {
+        "en": {
+          "title": "Why Here?",
+          "prompt": "Notice the order. Just before this verse (18-19) Allah praises those who give; just after (21) He says race toward His forgiveness. This reality-check about the world sits right in the middle. As a group, why do you think Allah placed 'the world is only play' exactly between giving and racing? What journey is He walking us through?"
+        },
+        "id": {
+          "title": "Kenapa Ditaruh di Sini?",
+          "prompt": "Perhatiin urutannya. Tepat sebelum ayat ini (18-19) Allah muji orang yang memberi; tepat sesudahnya (21) Allah nyuruh berlomba menuju ampunan-Nya. Reality-check soal dunia ini ditaruh pas di tengah-tengah. Bareng-bareng, kenapa kira-kira Allah naruh 'dunia cuma permainan' persis di antara memberi sama berlomba? Perjalanan macam apa yang lagi Allah tuntun buat kita lewatin?"
+        }
+      }
+    }
+  ]
+}
