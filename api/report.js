@@ -1,13 +1,14 @@
-// POST /api/report { group, reveal, logic, action }
-// Logs a group's Report Summary (one per group per day, latest wins). The drawn
-// mission is looked up from the group's lock so the admin can see which ayat the
-// report is about. submittedAt is set server-side.
+// POST /api/report { slug, groupKey, fields }
+// Logs a group's Report Summary (one per group per day, latest wins). `fields` is
+// an array of string values aligned by index to the event's report_summary. The
+// drawn mission + ayat ref are looked up server-side from the group's lock so the
+// admin can see which ayat the report is about. submittedAt is set server-side.
 
-import { saveReport, getGroupMission, today } from "../lib/pool.js";
-import { MISSIONS } from "../lib/strings.js";
+import { getEventConfig, getGroupCard, saveReport, today } from "../lib/pool.js";
 import { readJsonBody } from "./_body.js";
 
-const clip = (s) => String(s || "").slice(0, 4000);
+const DEFAULT_SLUG = "operation-iqra";
+const clip = (s) => String(s == null ? "" : s).slice(0, 4000);
 
 export default async function handler(req, res) {
   if (req.method !== "POST") {
@@ -16,24 +17,39 @@ export default async function handler(req, res) {
     return;
   }
   const body = readJsonBody(req);
-  const group = (body.group || "").trim();
-  if (!group) {
+  const slug = (body.slug || DEFAULT_SLUG).toString().trim();
+  const groupKey = (body.groupKey || "").toString().trim();
+  if (!groupKey) {
     res.status(400).json({ error: "group_required" });
     return;
   }
+  if (groupKey.length > 50) {
+    res.status(400).json({ error: "group_too_long" });
+    return;
+  }
   try {
+    const cfg = await getEventConfig(slug);
+    if (!cfg) {
+      res.status(404).json({ error: "event_not_found" });
+      return;
+    }
+    const online = cfg.player_per_group > 1;
     const date = today();
-    const mission = await getGroupMission({ date, group });
-    const ref = mission != null && MISSIONS[mission] ? MISSIONS[mission].ref : null;
-    const record = await saveReport({
-      date,
-      group,
-      reveal: clip(body.reveal),
-      logic: clip(body.logic),
-      action: clip(body.action),
-      mission,
-      ref,
-    });
+    const mission = await getGroupCard({ slug, date, groupKey, online });
+    // Reject reports for groups that never drew a card (no lock) — avoids
+    // polluting the reports hash with arbitrary group keys.
+    if (mission == null) {
+      res.status(409).json({ error: "no_drawn_mission" });
+      return;
+    }
+    const card = mission != null ? cfg.missionCards[mission] : null;
+    const ref = card ? card.ayat.ref : null;
+
+    const incoming = Array.isArray(body.fields) ? body.fields : [];
+    const fields = cfg.report_summary.map((f, i) => ({ label: f.label, value: clip(incoming[i]) }));
+    const group = online ? `Group ${groupKey}` : groupKey;
+
+    const record = await saveReport({ slug, date, groupKey, group, fields, mission, ref });
     res.status(200).json({ ok: true, submittedAt: record.submittedAt });
   } catch (err) {
     console.error("report failed:", err);

@@ -1,0 +1,493 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>Operation Iqra — Manage GameEvents</title>
+<style>
+  @font-face{ font-family:'RocaTwo'; font-weight:700; font-display:swap; src:url('./fonts/RocaTwo-Bold.ttf') format('truetype'); }
+  :root{ --bg:#717b5e; --bg2:#2E3326; --ink:#F9F9F6; --sage:#acb59a; --tan:#ab875f; --cream:#ffead1; --kraft:#4A3728; }
+  *{box-sizing:border-box; margin:0; padding:0}
+  body{ min-height:100dvh; background:radial-gradient(120% 90% at 50% 0%, #7d876a 0%, var(--bg) 45%, var(--bg2) 100%);
+    color:var(--ink); font-family:'Inter',system-ui,-apple-system,'Segoe UI',sans-serif; padding:24px; }
+  .serif{font-family:'RocaTwo',Georgia,serif; font-weight:700}
+  .wrap{max-width:920px; margin:0 auto}
+  .btn{font-family:inherit; font-weight:700; font-size:14px; padding:10px 15px; border-radius:11px; border:none; cursor:pointer}
+  .btn-sm{font-size:12px; padding:7px 11px; border-radius:9px}
+  .btn-primary{background:var(--tan); color:#2a1d12}
+  .btn-primary:disabled{opacity:.5; cursor:default}
+  .btn-ghost{background:transparent; color:var(--ink); border:1.5px solid var(--sage)}
+  .btn-danger{background:#8f3322; color:var(--cream)}
+  .errline{font-size:13px; color:#f0c9b0; min-height:1em}
+  .ok{color:#bfe0a8}
+
+  /* login */
+  #login{max-width:340px; margin:14vh auto 0; display:flex; flex-direction:column; gap:14px; align-items:stretch; text-align:center}
+  #login h1{font-size:22px}
+  #login .sub{font-size:12px; letter-spacing:2px; text-transform:uppercase; color:var(--sage)}
+  #pw{font-family:inherit; font-size:16px; color:var(--ink); text-align:center; background:rgba(255,255,255,.08);
+    border:1.5px solid var(--sage); border-radius:12px; padding:14px}
+  #pw:focus{outline:none; border-color:var(--cream)}
+
+  #app{display:none}
+  .topbar{display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap; margin-bottom:18px}
+  .topbar .sub{font-size:11px; letter-spacing:2px; text-transform:uppercase; color:var(--sage)}
+  .topbar h1{font-size:22px}
+  .toolbar{display:flex; gap:10px; align-items:center; flex-wrap:wrap; margin-bottom:18px}
+  #eventList{font-family:inherit; font-size:14px; color:var(--ink); background:rgba(255,255,255,.08);
+    border:1.5px solid var(--sage); border-radius:9px; padding:9px 11px; min-width:200px}
+  #eventList option{color:#2a2f22}
+
+  .panel{background:rgba(255,255,255,.06); border:1px solid rgba(172,181,154,.35); border-radius:16px; padding:18px 18px 20px; margin-bottom:18px}
+  .panel h2{font-size:13px; letter-spacing:2px; text-transform:uppercase; color:var(--sage); margin-bottom:14px}
+  /* collapsible sections */
+  .panel.collapsible > h2{cursor:pointer; user-select:none; margin-bottom:14px}
+  .panel.collapsible.collapsed > h2{margin-bottom:0}
+  .panel.collapsible > h2::before{content:"▾"; display:inline-block; width:1.2em; color:var(--tan)}
+  .panel.collapsible.collapsed > h2::before{content:"▸"}
+  .panel.collapsible.collapsed .panel-body{display:none}
+  .row{display:flex; gap:14px; flex-wrap:wrap}
+  .fld{display:flex; flex-direction:column; gap:5px; margin-bottom:12px; flex:1 1 200px}
+  .fld.full{flex-basis:100%}
+  .fld label{font-size:11px; letter-spacing:1px; text-transform:uppercase; color:var(--sage)}
+  .fld .hint{font-size:11px; color:var(--sage); opacity:.8}
+  input, select, textarea{font-family:inherit; font-size:14px; color:var(--ink); background:rgba(255,255,255,.08);
+    border:1.5px solid var(--sage); border-radius:9px; padding:9px 11px}
+  input:focus, select:focus, textarea:focus{outline:none; border-color:var(--cream)}
+  select option{color:#2a2f22}
+  textarea{min-height:60px; resize:vertical; line-height:1.45}
+  input.bad{border-color:#e08a6f}
+
+  .card{background:rgba(0,0,0,.14); border:1px solid rgba(172,181,154,.28); border-radius:14px; padding:14px 14px 6px; margin-bottom:14px}
+  .card .card-head{display:flex; align-items:center; gap:10px; margin-bottom:10px; cursor:pointer; user-select:none}
+  .card.collapsed .card-head{margin-bottom:0}
+  .card.collapsed{padding-bottom:14px}
+  .card .card-head .idx{font-size:11px; letter-spacing:2px; text-transform:uppercase; color:var(--tan); font-weight:700; white-space:nowrap}
+  .card .card-head .idx::before{content:"▾"; display:inline-block; width:1.2em; color:var(--tan)}
+  .card.collapsed .card-head .idx::before{content:"▸"}
+  .card .card-head .summary{flex:1; min-width:0; font-size:12px; color:var(--sage); font-weight:400; text-transform:none; letter-spacing:0;
+    white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
+  .card .card-head [data-rm]{flex:none}
+  .card.collapsed .card-body{display:none}
+  .subhead{font-size:10px; letter-spacing:1px; text-transform:uppercase; color:var(--tan); margin:6px 0 8px}
+  .ayat-preview{font-size:13px; color:var(--sage); min-height:1em; margin-top:4px; word-break:break-word}
+
+  .savebar{display:flex; gap:12px; align-items:center; flex-wrap:wrap; margin-top:6px}
+  .playerlink{font-size:12px; color:var(--sage); word-break:break-all}
+  .playerlink a{color:var(--cream)}
+</style>
+</head>
+<body>
+  <div class="wrap">
+    <!-- login -->
+    <div id="login">
+      <div class="sub">QSC × HIMMAH</div>
+      <h1 class="serif">Manage GameEvents</h1>
+      <input id="pw" type="password" placeholder="Password" autocomplete="current-password" />
+      <button class="btn btn-primary" id="loginBtn">Enter</button>
+      <div class="errline" id="loginErr"></div>
+    </div>
+
+    <!-- app -->
+    <div id="app">
+      <div class="topbar">
+        <div>
+          <div class="sub">QSC × HIMMAH</div>
+          <h1 class="serif">Manage GameEvents</h1>
+        </div>
+        <a class="btn btn-ghost" href="admin">← Back to Admin</a>
+      </div>
+
+      <div class="toolbar">
+        <select id="eventList"><option value="">— select an event —</option></select>
+        <button class="btn btn-ghost" id="newBtn">+ New event</button>
+        <button class="btn btn-danger btn-sm" id="deleteBtn" style="display:none">Delete</button>
+      </div>
+
+      <div id="editor" style="display:none">
+        <div class="panel">
+          <h2>Event settings</h2>
+          <div class="row">
+            <div class="fld">
+              <label for="fSlug">Event slug (URL)</label>
+              <input id="fSlug" type="text" placeholder="ramadan-week2" autocomplete="off" />
+              <div class="hint" id="slugHint">lowercase, digits, hyphens — used in /?event=slug</div>
+            </div>
+            <div class="fld">
+              <label for="fTitle">Title</label>
+              <input id="fTitle" type="text" placeholder="QSC × HIMMAH — Operation Iqra" />
+            </div>
+          </div>
+          <div class="row">
+            <div class="fld">
+              <label for="fPPG">Players per group</label>
+              <input id="fPPG" type="number" min="1" step="1" value="1" />
+              <div class="hint">1 = offline (name draw, no group number). &gt;1 = online (group number / breakout room).</div>
+            </div>
+            <div class="fld">
+              <label for="fCap">Max groups per mission card</label>
+              <input id="fCap" type="number" min="1" step="1" value="5" />
+              <div class="hint">Capacity = this × number of mission cards.</div>
+            </div>
+          </div>
+          <div class="playerlink" id="playerLink"></div>
+        </div>
+
+        <div class="panel collapsible collapsed">
+          <h2>Report summary fields (whole event)</h2>
+          <div class="panel-body">
+            <div id="reportList"></div>
+            <button class="btn btn-ghost btn-sm" id="addFieldBtn">+ Add field</button>
+          </div>
+        </div>
+
+        <div class="panel collapsible collapsed">
+          <h2>Mission cards</h2>
+          <div class="panel-body">
+            <div id="cardList"></div>
+            <button class="btn btn-ghost btn-sm" id="addCardBtn">+ Add mission card</button>
+          </div>
+        </div>
+
+        <div class="savebar">
+          <button class="btn btn-primary" id="saveBtn">Save event</button>
+          <div class="errline" id="saveMsg"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+<script type="module">
+  import { SURAHS } from './lib/surahs.js';
+  import { isValidEventSlug } from './lib/validate.js';
+  import { buildAyatSlug, parseAyatSlug, formatRef } from './lib/quran.js';
+
+  const $ = (id) => document.getElementById(id);
+  let pw = '';
+  let draft = null;      // event being edited
+  let isNew = false;
+
+  async function adminPost(action, extra){
+    const res = await fetch('/api/admin', {
+      method:'POST', headers:{ 'Content-Type':'application/json' },
+      body: JSON.stringify(Object.assign({ password: pw, action }, extra || {})),
+    });
+    return res;
+  }
+
+  async function login(){
+    pw = $('pw').value;
+    $('loginErr').textContent = '';
+    $('loginBtn').disabled = true;
+    try {
+      const res = await adminPost('listEvents');
+      if (res.status === 401){ $('loginErr').textContent = 'Wrong password.'; pw = ''; return; }
+      if (res.status === 500){ $('loginErr').textContent = 'Admin password not configured on the server.'; pw = ''; return; }
+      if (!res.ok) throw new Error('admin ' + res.status);
+      sessionStorage.setItem('qsc_admin_pw', pw);
+      const data = await res.json();
+      populateList(data.events || []);
+      $('login').style.display = 'none';
+      $('app').style.display = 'block';
+    } catch (e){
+      $('loginErr').textContent = 'Could not connect. Try again.';
+      pw = '';
+    } finally {
+      $('loginBtn').disabled = false;
+    }
+  }
+
+  // Skip the login screen when arriving from the (already password-gated) admin
+  // page, which stored the password in sessionStorage. Validate it once; on any
+  // failure, drop it and fall back to the manual login.
+  async function tryStoredLogin(){
+    const stored = sessionStorage.getItem('qsc_admin_pw');
+    if (!stored) return;
+    pw = stored;
+    try {
+      const res = await adminPost('listEvents');
+      if (!res.ok) throw new Error('admin ' + res.status);
+      const data = await res.json();
+      populateList(data.events || []);
+      $('login').style.display = 'none';
+      $('app').style.display = 'block';
+    } catch (e){
+      sessionStorage.removeItem('qsc_admin_pw');
+      pw = '';
+    }
+  }
+
+  function populateList(events){
+    const sel = $('eventList');
+    sel.innerHTML = '<option value="">— select an event —</option>';
+    events.forEach((s) => { const o = document.createElement('option'); o.value = s; o.textContent = s; sel.appendChild(o); });
+  }
+
+  function blankEvent(){
+    return { event_slug:'', title:'', player_per_group:1, max_group_per_mission_card:5, report_summary:[], missionCards:[] };
+  }
+
+  // Add surah/start/end scratch fields onto a card from its ayat_slug (for the pickers).
+  function hydrateCard(c){
+    const p = parseAyatSlug(c.ayat_slug || '');
+    c._surah = p ? p.surah : 96;
+    c._start = p ? p.start : 1;
+    c._end = p && p.end > p.start ? p.end : '';
+    if (!c.ayat) c.ayat = { ref:'', arabic:'', translation:{en:'',id:''} };
+    if (!c.mission_statement) c.mission_statement = { en:{title:'',prompt:''}, id:{title:'',prompt:''} };
+    return c;
+  }
+
+  async function loadEvent(slug){
+    if (!slug){ $('editor').style.display='none'; $('deleteBtn').style.display='none'; draft=null; return; }
+    const res = await adminPost('getEvent', { slug });
+    if (!res.ok){ $('saveMsg').textContent = 'Could not load event.'; return; }
+    const data = await res.json();
+    draft = data.event;
+    (draft.missionCards || []).forEach(hydrateCard);
+    isNew = false;
+    renderEditor();
+    $('deleteBtn').style.display = 'inline-block';
+  }
+
+  function newEvent(){
+    draft = blankEvent();
+    isNew = true;
+    $('eventList').value = '';
+    $('deleteBtn').style.display = 'none';
+    renderEditor();
+    $('fSlug').focus();
+  }
+
+  // ---- render ----
+  function renderEditor(){
+    $('editor').style.display = 'block';
+    $('fSlug').value = draft.event_slug;
+    $('fSlug').disabled = !isNew;            // slug immutable after create
+    $('fTitle').value = draft.title;
+    $('fPPG').value = draft.player_per_group;
+    $('fCap').value = draft.max_group_per_mission_card;
+    // sections start collapsed on every event load
+    document.querySelectorAll('.panel.collapsible').forEach((p) => p.classList.add('collapsed'));
+    validateSlug();
+    updatePlayerLink();
+    renderReportFields();
+    renderCards();
+  }
+
+  function updatePlayerLink(){
+    const s = draft.event_slug;
+    if (isValidEventSlug(s)){
+      $('playerLink').innerHTML = 'Player link: <a href="/?event=' + encodeURIComponent(s) + '" target="_blank">/?event=' + s + '</a>';
+    } else {
+      $('playerLink').textContent = 'Player link appears once the slug is valid.';
+    }
+  }
+
+  function validateSlug(){
+    const s = $('fSlug').value.trim();
+    const ok = isValidEventSlug(s);
+    $('fSlug').classList.toggle('bad', s.length > 0 && !ok);
+    $('slugHint').textContent = (s.length > 0 && !ok)
+      ? 'Invalid: lowercase letters, digits, single hyphens only (e.g. ramadan-week2).'
+      : 'lowercase, digits, hyphens — used in /?event=slug';
+    return ok;
+  }
+
+  function renderReportFields(){
+    const box = $('reportList'); box.innerHTML = '';
+    draft.report_summary.forEach((f, i) => {
+      const card = document.createElement('div'); card.className = 'card' + (f._open ? '' : ' collapsed');
+      card.innerHTML = `
+        <div class="card-head"><span class="idx">Field ${i+1}</span>
+          <span class="summary">${esc(f.label||'(untitled)')}</span>
+          <button class="btn btn-danger btn-sm" data-rm="${i}">Remove</button></div>
+        <div class="card-body">
+          <div class="fld full"><label>Label</label><input data-f="label" data-i="${i}" value="${attr(f.label)}" placeholder="The Reveal"></div>
+          <div class="row">
+            <div class="fld"><label>Hint (EN)</label><textarea data-f="hen" data-i="${i}" placeholder="The most surprising finding…">${esc(f.hints?.en||'')}</textarea></div>
+            <div class="fld"><label>Hint (ID)</label><textarea data-f="hid" data-i="${i}" placeholder="Temuan paling mengejutkan…">${esc(f.hints?.id||'')}</textarea></div>
+          </div>
+        </div>`;
+      box.appendChild(card);
+    });
+    box.querySelectorAll('.card').forEach((el, i) => {
+      el.querySelector('.card-head').addEventListener('click', (e) => {
+        if (e.target.closest('[data-rm]')) return;
+        draft.report_summary[i]._open = !draft.report_summary[i]._open;
+        el.classList.toggle('collapsed');
+      });
+    });
+    box.querySelectorAll('[data-rm]').forEach((b) => b.addEventListener('click', () => { draft.report_summary.splice(+b.dataset.rm,1); renderReportFields(); }));
+    box.querySelectorAll('[data-f]').forEach((el) => el.addEventListener('input', () => {
+      const i = +el.dataset.i, f = draft.report_summary[i];
+      if (el.dataset.f==='label'){ f.label = el.value; el.closest('.card').querySelector('.summary').textContent = el.value || '(untitled)'; }
+      else { f.hints = f.hints || {en:'',id:''}; if (el.dataset.f==='hen') f.hints.en = el.value; else f.hints.id = el.value; }
+    }));
+  }
+
+  function surahOptions(sel){
+    return SURAHS.map((s) => `<option value="${s.n}" ${s.n===sel?'selected':''}>${s.n}. ${esc(s.name)} (${s.ayahs} ayat)</option>`).join('');
+  }
+
+  function renderCards(){
+    const box = $('cardList'); box.innerHTML = '';
+    draft.missionCards.forEach((c, i) => {
+      const card = document.createElement('div'); card.className = 'card' + (c._open ? '' : ' collapsed');
+      const summary = (c.mission_slug || '(no label)') + (c.ayat?.ref || c.ayat_slug ? ' · ' + (c.ayat?.ref || c.ayat_slug) : '');
+      card.innerHTML = `
+        <div class="card-head"><span class="idx">Mission card ${i+1}</span>
+          <span class="summary">${esc(summary)}</span>
+          <button class="btn btn-danger btn-sm" data-rm="${i}">Remove</button></div>
+        <div class="card-body">
+        <div class="fld full"><label>Mission label</label><input data-c="mslug" data-i="${i}" value="${attr(c.mission_slug)}" placeholder="Mission 01"></div>
+        <div class="subhead">Ayat</div>
+        <div class="row">
+          <div class="fld" style="flex:2 1 260px"><label>Surah</label><select data-c="surah" data-i="${i}">${surahOptions(c._surah)}</select></div>
+          <div class="fld"><label>Ayat start</label><input data-c="start" data-i="${i}" type="number" min="1" value="${attr(c._start)}"></div>
+          <div class="fld"><label>Ayat end (optional)</label><input data-c="end" data-i="${i}" type="number" min="1" value="${attr(c._end)}"></div>
+        </div>
+        <div class="row">
+          <button class="btn btn-ghost btn-sm" data-fetch="${i}">Fetch ayat text</button>
+          <div class="ayat-preview" data-prev="${i}">${c.ayat?.ref ? esc(c.ayat.ref) : ''}</div>
+        </div>
+        <div class="fld full"><label>Arabic</label><textarea data-c="arabic" data-i="${i}" dir="rtl">${esc(c.ayat?.arabic||'')}</textarea></div>
+        <div class="row">
+          <div class="fld"><label>Translation (EN)</label><textarea data-c="ten" data-i="${i}">${esc(c.ayat?.translation?.en||'')}</textarea></div>
+          <div class="fld"><label>Translation (ID)</label><textarea data-c="tid" data-i="${i}">${esc(c.ayat?.translation?.id||'')}</textarea></div>
+        </div>
+        <div class="subhead">Mission statement</div>
+        <div class="row">
+          <div class="fld"><label>Title (EN)</label><input data-c="men_t" data-i="${i}" value="${attr(c.mission_statement?.en?.title)}"></div>
+          <div class="fld"><label>Title (ID)</label><input data-c="mid_t" data-i="${i}" value="${attr(c.mission_statement?.id?.title)}"></div>
+        </div>
+        <div class="row">
+          <div class="fld"><label>Prompt (EN)</label><textarea data-c="men_p" data-i="${i}">${esc(c.mission_statement?.en?.prompt||'')}</textarea></div>
+          <div class="fld"><label>Prompt (ID)</label><textarea data-c="mid_p" data-i="${i}">${esc(c.mission_statement?.id?.prompt||'')}</textarea></div>
+        </div>
+        </div>`;
+      box.appendChild(card);
+    });
+    // collapse toggle (head click, but not the Remove button)
+    box.querySelectorAll('.card').forEach((el, i) => {
+      el.querySelector('.card-head').addEventListener('click', (e) => {
+        if (e.target.closest('[data-rm]')) return;
+        draft.missionCards[i]._open = !draft.missionCards[i]._open;
+        el.classList.toggle('collapsed');
+      });
+    });
+    // remove
+    box.querySelectorAll('[data-rm]').forEach((b) => b.addEventListener('click', () => { draft.missionCards.splice(+b.dataset.rm,1); renderCards(); }));
+    // fetch
+    box.querySelectorAll('[data-fetch]').forEach((b) => b.addEventListener('click', () => fetchAyat(+b.dataset.fetch, b)));
+    // inputs
+    box.querySelectorAll('[data-c]').forEach((el) => el.addEventListener('input', () => {
+      const i = +el.dataset.i, c = draft.missionCards[i], k = el.dataset.c;
+      c.ayat = c.ayat || { ref:'', arabic:'', translation:{en:'',id:''} };
+      c.mission_statement = c.mission_statement || { en:{title:'',prompt:''}, id:{title:'',prompt:''} };
+      if (k==='mslug'){ c.mission_slug = el.value;
+        const sm = el.closest('.card').querySelector('.summary');
+        sm.textContent = (el.value || '(no label)') + (c.ayat?.ref || c.ayat_slug ? ' · ' + (c.ayat?.ref || c.ayat_slug) : ''); }
+      else if (k==='surah') c._surah = +el.value;
+      else if (k==='start') c._start = el.value;
+      else if (k==='end') c._end = el.value;
+      else if (k==='arabic') c.ayat.arabic = el.value;
+      else if (k==='ten') c.ayat.translation.en = el.value;
+      else if (k==='tid') c.ayat.translation.id = el.value;
+      else if (k==='men_t') c.mission_statement.en.title = el.value;
+      else if (k==='mid_t') c.mission_statement.id.title = el.value;
+      else if (k==='men_p') c.mission_statement.en.prompt = el.value;
+      else if (k==='mid_p') c.mission_statement.id.prompt = el.value;
+    }));
+  }
+
+  async function fetchAyat(i, btn){
+    const c = draft.missionCards[i];
+    const slug = buildAyatSlug(c._surah, c._start, c._end);
+    btn.disabled = true; const orig = btn.textContent; btn.textContent = 'Fetching…';
+    try {
+      const res = await adminPost('fetchAyat', { ayat_slug: slug });
+      if (!res.ok) throw new Error('fetch ' + res.status);
+      const data = await res.json();
+      c.ayat = { ref: data.ref, arabic: data.arabic, translation: { en: data.translation.en, id: data.translation.id } };
+      renderCards();
+    } catch (e){
+      const prev = document.querySelector(`[data-prev="${i}"]`);
+      if (prev) prev.textContent = 'Could not fetch. Check surah/ayat and try again.';
+    } finally {
+      btn.disabled = false; btn.textContent = orig;
+    }
+  }
+
+  function addField(){ draft.report_summary.push({ label:'', hints:{en:'',id:''}, _open:true }); renderReportFields(); }
+  function addCard(){ const c = hydrateCard({ mission_slug:'', ayat_slug:'96.Al-Alaq: 1' }); c._open = true; draft.missionCards.push(c); renderCards(); }
+
+  async function save(){
+    $('saveMsg').className = 'errline'; $('saveMsg').textContent = '';
+    draft.event_slug = $('fSlug').value.trim();
+    draft.title = $('fTitle').value.trim();
+    draft.player_per_group = Math.max(1, parseInt($('fPPG').value||'1',10));
+    draft.max_group_per_mission_card = Math.max(1, parseInt($('fCap').value||'5',10));
+    if (!isValidEventSlug(draft.event_slug)){ $('saveMsg').textContent = 'Fix the event slug first.'; return; }
+    // build ayat_slug per card from its pickers
+    const payload = JSON.parse(JSON.stringify(draft));
+    (payload.report_summary || []).forEach((f) => { delete f._open; });
+    payload.missionCards.forEach((c) => {
+      c.ayat_slug = buildAyatSlug(c._surah, c._start, c._end);
+      c.ayat = c.ayat || {}; c.ayat.ref = c.ayat.ref || formatRef(c.ayat_slug);
+      delete c._surah; delete c._start; delete c._end; delete c._open;
+    });
+    const btn = $('saveBtn'); btn.disabled = true;
+    try {
+      const res = await adminPost('saveEvent', { event: payload });
+      if (res.status === 400){ $('saveMsg').textContent = 'Server rejected the slug (invalid_slug).'; return; }
+      if (!res.ok) throw new Error('save ' + res.status);
+      $('saveMsg').className = 'ok errline'; $('saveMsg').textContent = 'Saved ✓';
+      // refresh list + lock slug
+      const list = await (await adminPost('listEvents')).json();
+      populateList(list.events || []);
+      $('eventList').value = draft.event_slug;
+      isNew = false; $('fSlug').disabled = true; $('deleteBtn').style.display = 'inline-block';
+      updatePlayerLink();
+    } catch (e){
+      $('saveMsg').textContent = 'Could not save. Try again.';
+    } finally {
+      btn.disabled = false;
+    }
+  }
+
+  async function deleteEvent(){
+    if (!draft || !draft.event_slug) return;
+    if (!confirm(`Delete event "${draft.event_slug}"? This removes its config, pool, and reports.`)) return;
+    const res = await adminPost('deleteEvent', { slug: draft.event_slug });
+    if (!res.ok){ $('saveMsg').textContent = 'Delete failed.'; return; }
+    const list = await (await adminPost('listEvents')).json();
+    populateList(list.events || []);
+    $('editor').style.display = 'none'; $('deleteBtn').style.display = 'none'; draft = null;
+  }
+
+  // helpers
+  function esc(s){ return String(s==null?'':s).replace(/[&<>]/g,(c)=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c])); }
+  function attr(s){ return String(s==null?'':s).replace(/[&<>"]/g,(c)=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
+
+  // wire up
+  $('loginBtn').addEventListener('click', login);
+  $('pw').addEventListener('keydown', (e) => { if (e.key === 'Enter') login(); });
+  $('eventList').addEventListener('change', () => loadEvent($('eventList').value));
+  $('newBtn').addEventListener('click', newEvent);
+  $('deleteBtn').addEventListener('click', deleteEvent);
+  $('fSlug').addEventListener('input', () => { draft.event_slug = $('fSlug').value.trim(); validateSlug(); updatePlayerLink(); });
+  $('fTitle').addEventListener('input', () => { draft.title = $('fTitle').value; });
+  $('fPPG').addEventListener('input', () => { draft.player_per_group = Math.max(1, parseInt($('fPPG').value||'1',10)); });
+  $('fCap').addEventListener('input', () => { draft.max_group_per_mission_card = Math.max(1, parseInt($('fCap').value||'5',10)); });
+  $('addFieldBtn').addEventListener('click', addField);
+  $('addCardBtn').addEventListener('click', addCard);
+  $('saveBtn').addEventListener('click', save);
+  // collapsible section headers
+  document.querySelectorAll('.panel.collapsible > h2').forEach((h) =>
+    h.addEventListener('click', () => h.parentElement.classList.toggle('collapsed')));
+
+  tryStoredLogin();
+</script>
+</body>
+</html>

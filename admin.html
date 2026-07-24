@@ -32,7 +32,10 @@
   .head{display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap; margin-bottom:18px}
   .head h1{font-size:22px}
   .head .sub{font-size:11px; letter-spacing:2px; text-transform:uppercase; color:var(--sage)}
-  .head-actions{display:flex; gap:10px}
+  .head-actions{display:flex; gap:10px; align-items:center; flex-wrap:wrap}
+  #eventSel{font-family:inherit; font-size:14px; color:var(--ink); background:rgba(255,255,255,.08);
+    border:1.5px solid var(--sage); border-radius:9px; padding:9px 11px}
+  #eventSel option{color:#2a2f22}
   .filters{display:flex; gap:12px; align-items:flex-end; flex-wrap:wrap; margin-bottom:20px;
     background:rgba(255,255,255,.06); border:1px solid rgba(172,181,154,.35); border-radius:14px; padding:14px 16px}
   .filters .fld{display:flex; flex-direction:column; gap:5px}
@@ -97,10 +100,12 @@
     <div id="dash">
       <div class="head">
         <div>
-          <div class="sub">QSC × HIMMAH · Operation Iqra</div>
+          <div class="sub">QSC × HIMMAH</div>
           <h1 class="serif">Report Summaries</h1>
         </div>
         <div class="head-actions">
+          <select id="eventSel" aria-label="Event"></select>
+          <button class="btn btn-ghost" id="manageBtn">Manage GameEvents</button>
           <button class="btn btn-ghost" id="refreshBtn">Refresh</button>
           <button class="btn btn-danger" id="resetBtn">Reset count</button>
         </div>
@@ -141,9 +146,7 @@
     <div class="modal" role="dialog" aria-modal="true">
       <div class="m-group serif" id="mGroup"></div>
       <div class="m-meta" id="mMeta"></div>
-      <div class="m-field"><h3>The Reveal</h3><p id="mReveal"></p></div>
-      <div class="m-field"><h3>The Logic</h3><p id="mLogic"></p></div>
-      <div class="m-field"><h3>The Action</h3><p id="mAction"></p></div>
+      <div id="mFields"></div>
     </div>
   </div>
 
@@ -151,6 +154,7 @@
   const $ = (id) => document.getElementById(id);
   let pw = '';
   let reports = [];
+  let slug = 'operation-iqra';
 
   const esc = (s) => String(s == null ? '' : s).replace(/[&<>"']/g, (c) => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   const pad = (n) => String(n).padStart(2, '0');
@@ -159,11 +163,19 @@
     if (isNaN(d)) return '';
     return `${pad(d.getDate())}-${pad(d.getMonth()+1)}-${d.getFullYear()} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
   }
+  function recordFields(r){
+    if (Array.isArray(r.fields)) return r.fields;
+    const legacy = [];
+    if ('reveal' in r) legacy.push({ label: 'The Reveal', value: r.reveal });
+    if ('logic' in r) legacy.push({ label: 'The Logic', value: r.logic });
+    if ('action' in r) legacy.push({ label: 'The Action', value: r.action });
+    return legacy;
+  }
 
-  async function adminPost(action){
+  async function adminPost(action, extra){
     const res = await fetch('/api/admin', {
       method:'POST', headers:{ 'Content-Type':'application/json' },
-      body: JSON.stringify({ password: pw, action }),
+      body: JSON.stringify(Object.assign({ password: pw, action }, extra || {})),
     });
     return res;
   }
@@ -173,15 +185,14 @@
     $('loginErr').textContent = '';
     $('loginBtn').disabled = true;
     try {
-      const res = await adminPost('reports');
+      const res = await adminPost('listEvents');
       if (res.status === 401){ $('loginErr').textContent = 'Wrong password.'; pw = ''; return; }
       if (res.status === 500){ $('loginErr').textContent = 'Admin password not configured on the server.'; pw = ''; return; }
       if (!res.ok) throw new Error('admin ' + res.status);
-      const data = await res.json();
-      reports = data.reports || [];
-      $('login').style.display = 'none';
-      $('dash').style.display = 'block';
-      render();
+      // Share the (validated) password with the Manage GameEvents page so it
+      // doesn't prompt again. sessionStorage: same-origin, cleared on tab close.
+      sessionStorage.setItem('qsc_admin_pw', pw);
+      await enterDash(await res.json());
     } catch (e){
       $('loginErr').textContent = 'Could not connect. Try again.';
       pw = '';
@@ -190,9 +201,45 @@
     }
   }
 
+  // Populate the event picker and show the dashboard (shared by manual login and
+  // the stored-password auto-login).
+  async function enterDash(data){
+    const events = (data && data.events) || [];
+    const sel = $('eventSel');
+    sel.innerHTML = '';
+    if (!events.length){
+      const opt = document.createElement('option');
+      opt.value = 'operation-iqra'; opt.textContent = 'operation-iqra (none configured)';
+      sel.appendChild(opt);
+    } else {
+      events.forEach((s) => { const o = document.createElement('option'); o.value = s; o.textContent = s; sel.appendChild(o); });
+    }
+    slug = sel.value;
+    $('login').style.display = 'none';
+    $('dash').style.display = 'block';
+    await refresh();
+  }
+
+  // Skip the login screen when arriving from the events page (or a prior admin
+  // login this session), which stored the password in sessionStorage. Validate
+  // once; on any failure drop it and show the manual login.
+  async function tryStoredLogin(){
+    const stored = sessionStorage.getItem('qsc_admin_pw');
+    if (!stored) return;
+    pw = stored;
+    try {
+      const res = await adminPost('listEvents');
+      if (!res.ok) throw new Error('admin ' + res.status);
+      await enterDash(await res.json());
+    } catch (e){
+      sessionStorage.removeItem('qsc_admin_pw');
+      pw = '';
+    }
+  }
+
   async function refresh(){
     try {
-      const res = await adminPost('reports');
+      const res = await adminPost('reports', { slug });
       if (!res.ok) throw new Error('admin ' + res.status);
       const data = await res.json();
       reports = data.reports || [];
@@ -201,10 +248,10 @@
   }
 
   async function resetCount(){
-    if (!confirm('Reset every mission envelope count back to 5?')) return;
+    if (!confirm(`Reset every mission envelope count for "${slug}" back to full?`)) return;
     const btn = $('resetBtn'); btn.disabled = true;
     try {
-      const res = await adminPost('reset');
+      const res = await adminPost('reset', { slug });
       if (!res.ok) throw new Error('reset ' + res.status);
       btn.textContent = 'Reset ✓';
       setTimeout(() => { btn.textContent = 'Reset count'; btn.disabled = false; }, 1600);
@@ -231,7 +278,7 @@
     const grid = $('grid');
     grid.innerHTML = '';
     $('empty').style.display = list.length ? 'none' : 'block';
-    list.forEach((r, i) => {
+    list.forEach((r) => {
       const tile = document.createElement('button');
       tile.className = 'env-tile';
       tile.innerHTML = `<div class="gname">${esc(r.group)}</div><div class="gtime">${esc(fmt(r.submittedAt))}</div>`;
@@ -246,19 +293,24 @@
     if (r.ref) parts.push(r.ref);
     parts.push(fmt(r.submittedAt));
     $('mMeta').textContent = parts.join(' · ');
-    setField('mReveal', r.reveal);
-    setField('mLogic', r.logic);
-    setField('mAction', r.action);
+    const box = $('mFields');
+    box.innerHTML = '';
+    recordFields(r).forEach((f) => {
+      const wrap = document.createElement('div');
+      wrap.className = 'm-field';
+      const h = document.createElement('h3');
+      h.textContent = f.label || '';
+      const p = document.createElement('p');
+      if (f.value && String(f.value).trim()){ p.textContent = f.value; }
+      else { p.textContent = '(left blank)'; p.className = 'blank'; }
+      wrap.appendChild(h); wrap.appendChild(p);
+      box.appendChild(wrap);
+    });
     $('overlay').classList.add('on');
-  }
-  function setField(id, val){
-    const el = $(id);
-    if (val && String(val).trim()){ el.textContent = val; el.classList.remove('blank'); }
-    else { el.textContent = '(left blank)'; el.classList.add('blank'); }
   }
   function closeModal(){ $('overlay').classList.remove('on'); }
 
-  // ---- countdown timer ----
+  // ---- countdown timer (local only) ----
   let remaining = 45 * 60;
   let running = false;
   let tid = null;
@@ -292,6 +344,8 @@
   // wire up
   $('loginBtn').addEventListener('click', login);
   $('pw').addEventListener('keydown', (e) => { if (e.key === 'Enter') login(); });
+  $('eventSel').addEventListener('change', () => { slug = $('eventSel').value; refresh(); });
+  $('manageBtn').addEventListener('click', () => { location.href = 'events'; });
   $('refreshBtn').addEventListener('click', refresh);
   $('resetBtn').addEventListener('click', resetCount);
   $('fromDt').addEventListener('change', render);
@@ -299,6 +353,8 @@
   $('clearFilter').addEventListener('click', () => { $('fromDt').value=''; $('toDt').value=''; render(); });
   $('overlay').addEventListener('click', (e) => { if (e.target === $('overlay')) closeModal(); });
   document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeModal(); });
+
+  tryStoredLogin();
 </script>
 </body>
 </html>

@@ -57,7 +57,7 @@
 <body>
   <div class="wrap">
     <div class="head">
-      <div class="sub">QSC × HIMMAH · Operation Iqra</div>
+      <div class="sub" id="sub">QSC × HIMMAH · Operation Iqra</div>
       <h1 class="serif">Mission Logs</h1>
     </div>
 
@@ -70,10 +70,6 @@
         <label for="fMission">Mission</label>
         <select id="fMission">
           <option value="">All missions</option>
-          <option value="0">Al-Alaq: 1</option>
-          <option value="1">Al-Alaq: 2</option>
-          <option value="2">Al-Alaq: 3</option>
-          <option value="3">Al-Alaq: 4-5</option>
         </select>
       </div>
       <div class="fld">
@@ -96,15 +92,15 @@
     <div class="modal" role="dialog" aria-modal="true">
       <div class="m-group serif" id="mGroup"></div>
       <div class="m-meta" id="mMeta"></div>
-      <div class="m-field"><h3>The Reveal</h3><p id="mReveal"></p></div>
-      <div class="m-field"><h3>The Logic</h3><p id="mLogic"></p></div>
-      <div class="m-field"><h3>The Action</h3><p id="mAction"></p></div>
+      <div id="mFields"></div>
     </div>
   </div>
 
 <script>
   const $ = (id) => document.getElementById(id);
+  const slug = (new URLSearchParams(location.search).get('event') || 'operation-iqra').trim();
   let reports = [];
+  let event = null;
 
   const esc = (s) => String(s == null ? '' : s).replace(/[&<>"']/g, (c) => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   const pad = (n) => String(n).padStart(2, '0');
@@ -114,9 +110,36 @@
     return `${pad(d.getDate())}-${pad(d.getMonth()+1)}-${d.getFullYear()} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
   }
 
+  // Normalize a report record's fields to [{label, value}] (supports legacy reveal/logic/action).
+  function recordFields(r){
+    if (Array.isArray(r.fields)) return r.fields;
+    const legacy = [];
+    if ('reveal' in r) legacy.push({ label: 'The Reveal', value: r.reveal });
+    if ('logic' in r) legacy.push({ label: 'The Logic', value: r.logic });
+    if ('action' in r) legacy.push({ label: 'The Action', value: r.action });
+    return legacy;
+  }
+
+  async function loadEvent(){
+    try {
+      const res = await fetch('/api/event?slug=' + encodeURIComponent(slug));
+      if (!res.ok) return;
+      const data = await res.json();
+      event = data.event;
+      if (event.title) $('sub').textContent = event.title;
+      const sel = $('fMission');
+      (event.missionCards || []).forEach((c, i) => {
+        const opt = document.createElement('option');
+        opt.value = String(i);
+        opt.textContent = c.ayat.ref || c.mission_slug || `Mission ${i+1}`;
+        sel.appendChild(opt);
+      });
+    } catch (e){ /* filter degrades gracefully */ }
+  }
+
   async function load(){
     try {
-      const res = await fetch('/api/logs');
+      const res = await fetch('/api/logs?slug=' + encodeURIComponent(slug));
       if (!res.ok) throw new Error('logs ' + res.status);
       const data = await res.json();
       reports = data.reports || [];
@@ -166,15 +189,20 @@
     if (r.ref) parts.push(r.ref);
     parts.push(fmt(r.submittedAt));
     $('mMeta').textContent = parts.join(' · ');
-    setField('mReveal', r.reveal);
-    setField('mLogic', r.logic);
-    setField('mAction', r.action);
+    const box = $('mFields');
+    box.innerHTML = '';
+    recordFields(r).forEach((f) => {
+      const wrap = document.createElement('div');
+      wrap.className = 'm-field';
+      const h = document.createElement('h3');
+      h.textContent = f.label || '';
+      const p = document.createElement('p');
+      if (f.value && String(f.value).trim()){ p.textContent = f.value; }
+      else { p.textContent = '(left blank)'; p.className = 'blank'; }
+      wrap.appendChild(h); wrap.appendChild(p);
+      box.appendChild(wrap);
+    });
     $('overlay').classList.add('on');
-  }
-  function setField(id, val){
-    const el = $(id);
-    if (val && String(val).trim()){ el.textContent = val; el.classList.remove('blank'); }
-    else { el.textContent = '(left blank)'; el.classList.add('blank'); }
   }
   function closeModal(){ $('overlay').classList.remove('on'); }
 
@@ -188,7 +216,7 @@
   $('overlay').addEventListener('click', (e) => { if (e.target === $('overlay')) closeModal(); });
   document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeModal(); });
 
-  load();
+  (async () => { await loadEvent(); await load(); })();
 </script>
 </body>
 </html>
