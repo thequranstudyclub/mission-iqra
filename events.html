@@ -62,6 +62,11 @@
   .card .card-head{display:flex; align-items:center; gap:10px; margin-bottom:10px; cursor:pointer; user-select:none}
   .card.collapsed .card-head{margin-bottom:0}
   .card.collapsed{padding-bottom:14px}
+  .card .card-head .drag-handle{flex:none; cursor:grab; color:var(--sage); font-size:16px; line-height:1; padding:0 2px; touch-action:none}
+  .card .card-head .drag-handle:active{cursor:grabbing}
+  .card.dragging{opacity:.45}
+  .card.drop-before{box-shadow:0 -3px 0 var(--tan)}
+  .card.drop-after{box-shadow:0 3px 0 var(--tan)}
   .card .card-head .idx{font-size:11px; letter-spacing:2px; text-transform:uppercase; color:var(--tan); font-weight:700; white-space:nowrap}
   .card .card-head .idx::before{content:"▾"; display:inline-block; width:1.2em; color:var(--tan)}
   .card.collapsed .card-head .idx::before{content:"▸"}
@@ -213,6 +218,7 @@
   let draft = null;      // event being edited
   let isNew = false;
   let previewLang = 'en';
+  let dragFieldIndex = null;
 
   async function adminPost(action, extra){
     const res = await fetch('/api/admin', {
@@ -343,12 +349,23 @@
     return ok;
   }
 
+  // Move a report field from one index to another, then re-render (renumbers labels).
+  function moveField(from, to){
+    const arr = draft.report_summary;
+    if (from == null || from < 0 || from >= arr.length) return;
+    if (from === to || to === from + 1) return; // dropped in place
+    const [item] = arr.splice(from, 1);
+    if (from < to) to--; // indices shift left after removal
+    arr.splice(Math.max(0, Math.min(arr.length, to)), 0, item);
+    renderReportFields();
+  }
+
   function renderReportFields(){
     const box = $('reportList'); box.innerHTML = '';
     draft.report_summary.forEach((f, i) => {
       const card = document.createElement('div'); card.className = 'card' + (f._open ? '' : ' collapsed');
       card.innerHTML = `
-        <div class="card-head"><span class="idx">Field ${i+1}</span>
+        <div class="card-head"><span class="drag-handle" title="Drag to reorder">⠿</span><span class="idx">Field ${i+1}</span>
           <span class="summary">${esc(f.label||'(untitled)')}</span>
           <button class="btn btn-danger btn-sm" data-rm="${i}">Remove</button></div>
         <div class="card-body">
@@ -362,9 +379,31 @@
     });
     box.querySelectorAll('.card').forEach((el, i) => {
       el.querySelector('.card-head').addEventListener('click', (e) => {
-        if (e.target.closest('[data-rm]')) return;
+        if (e.target.closest('[data-rm]') || e.target.closest('.drag-handle')) return;
         draft.report_summary[i]._open = !draft.report_summary[i]._open;
         el.classList.toggle('collapsed');
+      });
+      // drag-to-reorder: only the handle arms dragging, so inputs stay selectable
+      const handle = el.querySelector('.drag-handle');
+      handle.addEventListener('mousedown', () => { el.draggable = true; });
+      el.addEventListener('dragstart', (e) => { dragFieldIndex = i; e.dataTransfer.effectAllowed = 'move'; el.classList.add('dragging'); });
+      el.addEventListener('dragover', (e) => {
+        e.preventDefault(); e.dataTransfer.dropEffect = 'move';
+        const r = el.getBoundingClientRect();
+        const after = e.clientY > r.top + r.height / 2;
+        el.classList.toggle('drop-after', after);
+        el.classList.toggle('drop-before', !after);
+      });
+      el.addEventListener('dragleave', () => { el.classList.remove('drop-before', 'drop-after'); });
+      el.addEventListener('drop', (e) => {
+        e.preventDefault();
+        const r = el.getBoundingClientRect();
+        const after = e.clientY > r.top + r.height / 2;
+        moveField(dragFieldIndex, i + (after ? 1 : 0));
+      });
+      el.addEventListener('dragend', () => {
+        el.draggable = false; dragFieldIndex = null;
+        box.querySelectorAll('.card').forEach((c) => c.classList.remove('dragging', 'drop-before', 'drop-after'));
       });
     });
     box.querySelectorAll('[data-rm]').forEach((b) => b.addEventListener('click', () => { draft.report_summary.splice(+b.dataset.rm,1); renderReportFields(); }));
