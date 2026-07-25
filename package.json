@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "private": true,
   "type": "module",
-  "description": "QSC x HIMMAH — Operation Iqra Mission Card (shared envelope draw)",
+  "description": "QSC — Operation Iqra Mission Card (shared envelope draw)",
   "scripts": {
     "test": "node --test"
   },

@@ -10,7 +10,7 @@
 
 const CONFIG = {
   event_slug: "operation-iqra",
-  title: "QSC × HIMMAH — Operation Iqra",
+  title: "QSC — Operation Iqra",
   player_per_group: 1,
   max_group_per_mission_card: 5,
   report_summary: [
