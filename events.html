@@ -75,6 +75,33 @@
   .savebar{display:flex; gap:12px; align-items:center; flex-wrap:wrap; margin-top:6px}
   .playerlink{font-size:12px; color:var(--sage); word-break:break-all}
   .playerlink a{color:var(--cream)}
+
+  /* ---- mission card preview overlay ---- */
+  #preview{display:none; position:fixed; inset:0; z-index:50; background:rgba(20,23,15,.74);
+    padding:20px; overflow:auto; justify-content:center; align-items:flex-start}
+  .pv-panel{width:100%; max-width:440px; margin:0 auto 40px; display:flex; flex-direction:column; gap:18px}
+  .pv-bar{position:sticky; top:0; z-index:1; display:flex; align-items:center; justify-content:space-between; gap:12px;
+    padding:8px 0 6px}
+  .langsel{display:inline-flex; border:1px solid var(--sage); border-radius:999px; overflow:hidden; flex:none; background:rgba(20,23,15,.7)}
+  .langsel button{font-family:inherit; font-size:11px; font-weight:700; letter-spacing:1px; padding:6px 13px;
+    background:transparent; color:var(--sage); border:none; cursor:pointer}
+  .langsel button[aria-pressed="true"]{background:var(--sage); color:#2a2f22}
+  .pv-cards{display:flex; flex-direction:column; gap:22px}
+  .preview-empty{color:var(--sage); text-align:center; padding:30px 0}
+  /* mission card — mirrors the player game (index.html) */
+  .paper{width:100%; background:var(--cream); color:var(--kraft); border-radius:18px; padding:26px 24px 28px;
+    box-shadow:0 24px 60px rgba(0,0,0,.4); position:relative; overflow:hidden}
+  .paper::before{content:""; position:absolute; inset:0; border:2px dashed rgba(74,55,40,.25); border-radius:14px; margin:8px; pointer-events:none}
+  .paper .tag{font-size:11px; letter-spacing:2px; text-transform:uppercase; color:var(--tan); font-weight:700}
+  .paper .mtitle{font-size:24px; margin:6px 0 16px; color:var(--kraft)}
+  .paper .brief-label,.paper .mission-label{font-size:10px; letter-spacing:2px; text-transform:uppercase; color:var(--tan)}
+  .paper .brief-label{text-align:center; margin-bottom:4px}
+  .paper .mission-label{margin-bottom:6px}
+  .paper .arabic{font-size:30px; line-height:1.95; direction:rtl; text-align:center; margin:2px 0 8px; color:#3a2b1e}
+  .paper .translation{text-align:center; font-size:14px; line-height:1.5; color:#7a5c3f; margin-bottom:18px}
+  .paper .divider{height:1px; background:rgba(74,55,40,.18); margin:0 0 16px}
+  .paper .prompt{font-size:15px; line-height:1.6; color:#4a3728; white-space:pre-wrap}
+  .paper .ref{margin-top:16px; font-size:12px; color:var(--tan); font-weight:600; text-align:right}
 </style>
 </head>
 <body>
@@ -101,6 +128,7 @@
       <div class="toolbar">
         <select id="eventList"><option value="">— select an event —</option></select>
         <button class="btn btn-ghost" id="newBtn">+ New event</button>
+        <button class="btn btn-ghost" id="previewBtn" style="display:none">Preview cards</button>
         <button class="btn btn-danger btn-sm" id="deleteBtn" style="display:none">Delete</button>
       </div>
 
@@ -157,15 +185,31 @@
     </div>
   </div>
 
+  <!-- mission card preview -->
+  <div id="preview">
+    <div class="pv-panel">
+      <div class="pv-bar">
+        <div class="langsel" role="group" aria-label="Language">
+          <button id="pvEn" aria-pressed="true">EN</button>
+          <button id="pvId" aria-pressed="false">ID</button>
+        </div>
+        <button class="btn btn-ghost btn-sm" id="pvClose">Close ✕</button>
+      </div>
+      <div class="pv-cards" id="previewCards"></div>
+    </div>
+  </div>
+
 <script type="module">
   import { SURAHS } from './lib/surahs.js';
   import { isValidEventSlug } from './lib/validate.js';
   import { buildAyatSlug, parseAyatSlug, formatRef } from './lib/quran.js';
+  import { I18N } from './lib/strings.js';
 
   const $ = (id) => document.getElementById(id);
   let pw = '';
   let draft = null;      // event being edited
   let isNew = false;
+  let previewLang = 'en';
 
   async function adminPost(action, extra){
     const res = await fetch('/api/admin', {
@@ -239,7 +283,7 @@
   }
 
   async function loadEvent(slug){
-    if (!slug){ $('editor').style.display='none'; $('deleteBtn').style.display='none'; draft=null; return; }
+    if (!slug){ $('editor').style.display='none'; $('deleteBtn').style.display='none'; $('previewBtn').style.display='none'; draft=null; return; }
     const res = await adminPost('getEvent', { slug });
     if (!res.ok){ $('saveMsg').textContent = 'Could not load event.'; return; }
     const data = await res.json();
@@ -262,6 +306,7 @@
   // ---- render ----
   function renderEditor(){
     $('editor').style.display = 'block';
+    $('previewBtn').style.display = 'inline-block';
     $('fSlug').value = draft.event_slug;
     $('fSlug').disabled = !isNew;            // slug immutable after create
     $('fTitle').value = draft.title;
@@ -463,8 +508,41 @@
     if (!res.ok){ $('saveMsg').textContent = 'Delete failed.'; return; }
     const list = await (await adminPost('listEvents')).json();
     populateList(list.events || []);
-    $('editor').style.display = 'none'; $('deleteBtn').style.display = 'none'; draft = null;
+    $('editor').style.display = 'none'; $('deleteBtn').style.display = 'none'; $('previewBtn').style.display = 'none'; draft = null;
   }
+
+  // ---- mission card preview (mirrors the player game render) ----
+  function renderPreview(){
+    const lang = previewLang;
+    const x = I18N[lang] || I18N.en;
+    const cards = (draft && draft.missionCards) ? draft.missionCards : [];
+    const box = $('previewCards');
+    if (!cards.length){
+      box.innerHTML = '<div class="preview-empty">No mission cards yet. Add one to preview it.</div>';
+    } else {
+      box.innerHTML = cards.map((c) => {
+        const ms = (c.mission_statement && (c.mission_statement[lang] || c.mission_statement.en)) || { title:'', prompt:'' };
+        const tr = (c.ayat && c.ayat.translation && (c.ayat.translation[lang] || c.ayat.translation.en)) || '';
+        return `
+        <div class="paper">
+          <div class="tag">${esc(c.mission_slug || '')}</div>
+          <h1 class="mtitle serif">${esc(ms.title || '')}</h1>
+          <div class="brief-label">${esc(x.briefLabel)}</div>
+          <div class="arabic serif">${esc(c.ayat?.arabic || '')}</div>
+          <div class="translation">${esc(tr)}</div>
+          <div class="divider"></div>
+          <div class="mission-label">${esc(x.missionLabel)}</div>
+          <p class="prompt">${esc(ms.prompt || '')}</p>
+          <div class="ref">${esc(c.ayat?.ref || '')}</div>
+        </div>`;
+      }).join('');
+    }
+    $('pvEn').setAttribute('aria-pressed', lang === 'en');
+    $('pvId').setAttribute('aria-pressed', lang === 'id');
+  }
+  function openPreview(){ if (!draft) return; renderPreview(); $('preview').style.display = 'flex'; }
+  function closePreview(){ $('preview').style.display = 'none'; }
+  function setPreviewLang(l){ previewLang = l; renderPreview(); }
 
   // helpers
   function esc(s){ return String(s==null?'':s).replace(/[&<>]/g,(c)=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c])); }
@@ -483,6 +561,12 @@
   $('addFieldBtn').addEventListener('click', addField);
   $('addCardBtn').addEventListener('click', addCard);
   $('saveBtn').addEventListener('click', save);
+  $('previewBtn').addEventListener('click', openPreview);
+  $('pvClose').addEventListener('click', closePreview);
+  $('pvEn').addEventListener('click', () => setPreviewLang('en'));
+  $('pvId').addEventListener('click', () => setPreviewLang('id'));
+  $('preview').addEventListener('click', (e) => { if (e.target === $('preview')) closePreview(); });
+  document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && $('preview').style.display === 'flex') closePreview(); });
   // collapsible section headers
   document.querySelectorAll('.panel.collapsible > h2').forEach((h) =>
     h.addEventListener('click', () => h.parentElement.classList.toggle('collapsed')));
