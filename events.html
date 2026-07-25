@@ -70,6 +70,9 @@
   .card .card-head [data-rm]{flex:none}
   .card.collapsed .card-body{display:none}
   .subhead{font-size:10px; letter-spacing:1px; text-transform:uppercase; color:var(--tan); margin:6px 0 8px}
+  .chk{display:inline-flex; align-items:center; gap:8px; font-size:13px; color:var(--ink); cursor:pointer; margin-bottom:10px}
+  .chk input{appearance:auto; -webkit-appearance:checkbox; width:16px; height:16px; accent-color:var(--tan);
+    background:none; border:none; border-radius:0; padding:0; margin:0; flex:none; cursor:pointer}
   .ayat-preview{font-size:13px; color:var(--sage); min-height:1em; margin-top:4px; word-break:break-word}
 
   .savebar{display:flex; gap:12px; align-items:center; flex-wrap:wrap; margin-top:6px}
@@ -279,6 +282,7 @@
     c._end = p && p.end > p.start ? p.end : '';
     if (!c.ayat) c.ayat = { ref:'', arabic:'', translation:{en:'',id:''} };
     if (!c.mission_statement) c.mission_statement = { en:{title:'',prompt:''}, id:{title:'',prompt:''} };
+    c.show_ayat = c.show_ayat !== false; // default: show the ayah
     return c;
   }
 
@@ -387,6 +391,7 @@
         <div class="card-body">
         <div class="fld full"><label>Mission label</label><input data-c="mslug" data-i="${i}" value="${attr(c.mission_slug)}" placeholder="Mission 01"></div>
         <div class="subhead">Ayat</div>
+        <label class="chk"><input type="checkbox" data-c="showayat" data-i="${i}" ${c.show_ayat!==false?'checked':''}> Show ayah on mission card</label>
         <div class="row">
           <div class="fld" style="flex:2 1 260px"><label>Surah</label><select data-c="surah" data-i="${i}">${surahOptions(c._surah)}</select></div>
           <div class="fld"><label>Ayat start</label><input data-c="start" data-i="${i}" type="number" min="1" value="${attr(c._start)}"></div>
@@ -433,6 +438,7 @@
       if (k==='mslug'){ c.mission_slug = el.value;
         const sm = el.closest('.card').querySelector('.summary');
         sm.textContent = (el.value || '(no label)') + (c.ayat?.ref || c.ayat_slug ? ' · ' + (c.ayat?.ref || c.ayat_slug) : ''); }
+      else if (k==='showayat') c.show_ayat = el.checked;
       else if (k==='surah') c._surah = +el.value;
       else if (k==='start') c._start = el.value;
       else if (k==='end') c._end = el.value;
@@ -523,17 +529,19 @@
       box.innerHTML = cards.map((c) => {
         const ms = (c.mission_statement && (c.mission_statement[lang] || c.mission_statement.en)) || { title:'', prompt:'' };
         const tr = (c.ayat && c.ayat.translation && (c.ayat.translation[lang] || c.ayat.translation.en)) || '';
+        const showAyat = c.show_ayat !== false;
+        const ayatBlock = showAyat ? `
+          <div class="brief-label">${esc(x.briefLabel)}</div>
+          <div class="arabic serif">${esc(c.ayat?.arabic || '')}</div>
+          <div class="translation">${esc(tr)}</div>` : '';
+        const refBlock = showAyat ? `<div class="ref">${esc(c.ayat?.ref || '')}</div>` : '';
         return `
         <div class="paper">
           <div class="tag">${esc(c.mission_slug || '')}</div>
-          <h1 class="mtitle serif">${esc(ms.title || '')}</h1>
-          <div class="brief-label">${esc(x.briefLabel)}</div>
-          <div class="arabic serif">${esc(c.ayat?.arabic || '')}</div>
-          <div class="translation">${esc(tr)}</div>
+          <h1 class="mtitle serif">${esc(ms.title || '')}</h1>${ayatBlock}
           <div class="divider"></div>
           <div class="mission-label">${esc(x.missionLabel)}</div>
-          <p class="prompt">${esc(ms.prompt || '')}</p>
-          <div class="ref">${esc(c.ayat?.ref || '')}</div>
+          <p class="prompt">${esc(ms.prompt || '')}</p>${refBlock}
         </div>`;
       }).join('');
     }

@@ -339,6 +339,11 @@
     $('mTranslation').textContent = c.ayat.translation[lang] || c.ayat.translation.en;
     $('mPrompt').textContent = ms.prompt;
     $('mRef').textContent = c.ayat.ref;
+    // Per-mission toggle: hide the whole ayah block (label + arabic + translation
+    // + ref) when show_ayat is false. Default true for older configs.
+    const showAyat = c.show_ayat !== false;
+    const ayatEls = [$('briefLabel'), $('mArabic'), $('mTranslation'), $('mRef')];
+    ayatEls.forEach((el) => { el.style.display = showAyat ? '' : 'none'; });
   }
 
   function setLang(l){ lang = l; localStorage.setItem(LANG_KEY, l); applyLang(); }
