@@ -4,6 +4,9 @@
   "private": true,
   "type": "module",
   "description": "QSC x HIMMAH — Operation Iqra Mission Card (shared envelope draw)",
+  "scripts": {
+    "test": "node --test"
+  },
   "dependencies": {
     "@quranjs/api": "^3.4.0",
     "@upstash/redis": "^1.34.3"
