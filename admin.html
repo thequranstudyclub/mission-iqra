@@ -281,7 +281,7 @@
     list.forEach((r) => {
       const tile = document.createElement('button');
       tile.className = 'env-tile';
-      tile.innerHTML = `<div class="gname">${esc(r.group)}</div><div class="gtime">${esc(fmt(r.submittedAt))}</div>`;
+      tile.innerHTML = `<div class="gname">${esc(r.group)}</div>${r.room ? `<div class="gtime">Room ${esc(r.room)}</div>` : ''}<div class="gtime">${esc(fmt(r.submittedAt))}</div>`;
       tile.addEventListener('click', () => openModal(r));
       grid.appendChild(tile);
     });
@@ -290,6 +290,7 @@
   function openModal(r){
     $('mGroup').textContent = r.group;
     const parts = [];
+    if (r.room) parts.push('Room ' + r.room);
     if (r.ref) parts.push(r.ref);
     parts.push(fmt(r.submittedAt));
     $('mMeta').textContent = parts.join(' · ');

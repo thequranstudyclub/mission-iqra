@@ -35,7 +35,14 @@ export default async function handler(req, res) {
     }
     const online = cfg.player_per_group > 1;
     const date = today();
-    const mission = await getGroupCard({ slug, date, groupKey, online });
+    // Online: the report is keyed by the entered name (groupKey), but the drawn
+    // mission is locked to the room number, sent as `room`. Offline: name is both.
+    const room = online ? (body.room || "").toString().trim() : null;
+    if (online && !room) {
+      res.status(400).json({ error: "room_required" });
+      return;
+    }
+    const mission = await getGroupCard({ slug, date, groupKey: online ? room : groupKey, online });
     // Reject reports for groups that never drew a card (no lock) — avoids
     // polluting the reports hash with arbitrary group keys.
     if (mission == null) {
@@ -47,9 +54,9 @@ export default async function handler(req, res) {
 
     const incoming = Array.isArray(body.fields) ? body.fields : [];
     const fields = cfg.report_summary.map((f, i) => ({ label: f.label, value: clip(incoming[i]) }));
-    const group = online ? `Group ${groupKey}` : groupKey;
+    const group = groupKey; // the entered name (both modes)
 
-    const record = await saveReport({ slug, date, groupKey, group, fields, mission, ref });
+    const record = await saveReport({ slug, date, groupKey, group, fields, mission, ref, room });
     res.status(200).json({ ok: true, submittedAt: record.submittedAt });
   } catch (err) {
     console.error("report failed:", err);

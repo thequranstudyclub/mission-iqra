@@ -288,7 +288,7 @@
     document.documentElement.lang = lang;
     $('brandmark').textContent = (event && event.title) ? event.title : x.brand;
     $('landingLead').textContent = online ? x.joinLead : x.landingLead;
-    $('groupInput').placeholder = x.groupPlaceholder;
+    $('groupInput').placeholder = online ? x.namePlaceholder : x.groupPlaceholder;
     $('openBtn').textContent = online ? x.joinBtn : x.openBtn;
     $('caption').textContent = x.shuffling;
     $('tapLabel').innerHTML = x.tap;
@@ -312,14 +312,19 @@
   }
 
   function updateGroupCard(){
+    // Name label — both modes now show the participant's entered name.
+    if (group){
+      $('cardGroup').style.display = 'block';
+      $('cardGroup').innerHTML = '<b>' + escapeHtml(group) + '</b>';
+    } else {
+      $('cardGroup').style.display = 'none';
+    }
+    // Room card — online only. Just "Room N" (no "Group N" repeat).
     if (online && groupNumber != null){
       $('groupNumCard').classList.add('on');
-      $('gncNum').textContent = `${t().groupWord} ${groupNumber} · ${t().roomWord} ${groupNumber}`;
-      $('cardGroup').style.display = 'none';
+      $('gncNum').textContent = `${t().roomWord} ${groupNumber}`;
     } else {
       $('groupNumCard').classList.remove('on');
-      $('cardGroup').style.display = 'block';
-      if (group) $('cardGroup').innerHTML = '<b>' + escapeHtml(group) + '</b>';
     }
   }
 
@@ -375,19 +380,20 @@
 
   // ----- landing / draw -----
   function refreshOpenBtn(){
-    if (online) { $('openBtn').disabled = false; return; }
+    // Both modes require a name before opening.
     $('openBtn').disabled = $('groupInput').value.trim().length === 0;
   }
 
   async function openMissionCard(){
     $('landingErr').textContent = '';
     let body;
-    let enteredName = '';
+    const enteredName = $('groupInput').value.trim();
+    if (!enteredName){ $('landingErr').textContent = t().nameRequired; return; }
     if (online){
+      // Online still assigns a room by playerId; the name is a display label
+      // carried into the report so the admin sees who submitted.
       body = { slug, playerId: playerId() };
     } else {
-      enteredName = $('groupInput').value.trim();
-      if (!enteredName){ $('landingErr').textContent = t().nameRequired; return; }
       body = { slug, name: enteredName };
     }
     $('openBtn').disabled = true;
@@ -405,14 +411,12 @@
       return;
     }
     lastDrawn = data.mission;
+    group = enteredName;
+    groupKey = enteredName;      // report is keyed by the entered name (both modes)
     if (online){
-      groupNumber = data.group;
-      groupKey = String(data.group);
-      group = '';
+      groupNumber = data.group;  // room number — used to look up the mission lock
       lastRemaining = null;
     } else {
-      group = enteredName;
-      groupKey = group;
       lastRemaining = data.remaining;
     }
     setClaim({ group, groupKey, groupNumber, mission: lastDrawn, date: clientDate() });
@@ -447,10 +451,12 @@
     btn.disabled = true;
     $('submittedMsg').textContent = '';
     const fields = (event.report_summary || []).map((f, i) => ($(`fReport${i}`) ? $(`fReport${i}`).value : ''));
+    const payload = { slug, groupKey, fields };
+    if (online) payload.room = String(groupNumber); // room number for mission lookup
     try {
       const res = await fetch('/api/report', {
         method:'POST', headers:{ 'Content-Type':'application/json' },
-        body: JSON.stringify({ slug, groupKey, fields }),
+        body: JSON.stringify(payload),
       });
       if (!res.ok) throw new Error('report ' + res.status);
       submitted = true;
@@ -495,8 +501,8 @@
     if (claim && claim.mission != null && claim.date === clientDate()){
       startFromClaim(claim);
     } else {
-      // online mode has no text input; hide it
-      $('groupInput').style.display = online ? 'none' : 'block';
+      // both modes now collect a name
+      $('groupInput').style.display = 'block';
       show('landing');
       refreshOpenBtn();
     }
