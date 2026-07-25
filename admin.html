@@ -79,6 +79,15 @@
     border-radius:18px; padding:26px 24px; box-shadow:0 30px 70px rgba(0,0,0,.5)}
   .modal .m-group{font-size:22px; margin-bottom:2px}
   .modal .m-meta{font-size:12px; color:var(--tan); font-weight:600; margin-bottom:18px}
+  .modal .m-mission{margin-bottom:18px; padding-bottom:16px; border-bottom:1px solid rgba(74,55,40,.18)}
+  .modal .m-mission .m-mhead{display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:8px}
+  .modal .m-mlabel{font-size:10px; letter-spacing:2px; text-transform:uppercase; color:var(--tan); font-weight:700}
+  .modal .m-mtitle{font-size:19px; color:var(--kraft); margin-bottom:6px}
+  .modal .m-mstatement{font-size:15px; line-height:1.55; color:#3a2b1e; white-space:pre-wrap; word-break:break-word}
+  .langsel{display:inline-flex; border:1px solid var(--tan); border-radius:999px; overflow:hidden; flex:none}
+  .langsel button{font-family:inherit; font-size:11px; font-weight:700; letter-spacing:1px; padding:5px 11px;
+    background:transparent; color:var(--tan); border:none; cursor:pointer}
+  .langsel button[aria-pressed="true"]{background:var(--tan); color:var(--cream)}
   .modal .m-field{margin-bottom:16px}
   .modal .m-field h3{font-size:12px; letter-spacing:1px; text-transform:uppercase; color:var(--tan); margin-bottom:4px}
   .modal .m-field p{font-size:15px; line-height:1.55; color:#3a2b1e; white-space:pre-wrap; word-break:break-word}
@@ -146,6 +155,17 @@
     <div class="modal" role="dialog" aria-modal="true">
       <div class="m-group serif" id="mGroup"></div>
       <div class="m-meta" id="mMeta"></div>
+      <div class="m-mission" id="mMission" style="display:none">
+        <div class="m-mhead">
+          <div class="m-mlabel" id="mmLabel"></div>
+          <div class="langsel" role="group" aria-label="Language">
+            <button id="mmEn" aria-pressed="true">EN</button>
+            <button id="mmId" aria-pressed="false">ID</button>
+          </div>
+        </div>
+        <div class="m-mtitle serif" id="mmTitle"></div>
+        <div class="m-mstatement" id="mmStatement"></div>
+      </div>
       <div id="mFields"></div>
     </div>
   </div>
@@ -155,6 +175,9 @@
   let pw = '';
   let reports = [];
   let slug = 'operation-iqra';
+  let eventCfg = null;       // current event config (for mission title/statement lookup)
+  let modalLang = 'en';      // language shown in the open report modal
+  let modalReport = null;    // report currently shown in the modal
 
   const esc = (s) => String(s == null ? '' : s).replace(/[&<>"']/g, (c) => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   const pad = (n) => String(n).padStart(2, '0');
@@ -245,6 +268,11 @@
       reports = data.reports || [];
       render();
     } catch (e){ /* keep existing */ }
+    // Load the event config so the report modal can show mission title/statement.
+    try {
+      const res = await adminPost('getEvent', { slug });
+      eventCfg = res.ok ? (await res.json()).event : null;
+    } catch (e){ eventCfg = null; }
   }
 
   async function resetCount(){
@@ -287,13 +315,29 @@
     });
   }
 
+  function renderModalMission(){
+    const r = modalReport;
+    const card = (eventCfg && r && r.mission != null && eventCfg.missionCards) ? eventCfg.missionCards[r.mission] : null;
+    if (!card){ $('mMission').style.display = 'none'; return; }
+    const ms = (card.mission_statement && (card.mission_statement[modalLang] || card.mission_statement.en)) || { title:'', prompt:'' };
+    $('mmLabel').textContent = card.mission_slug || '';
+    $('mmTitle').textContent = ms.title || '';
+    $('mmStatement').textContent = ms.prompt || '';
+    $('mmEn').setAttribute('aria-pressed', modalLang === 'en');
+    $('mmId').setAttribute('aria-pressed', modalLang === 'id');
+    $('mMission').style.display = 'block';
+  }
+  function setModalLang(l){ modalLang = l; renderModalMission(); }
+
   function openModal(r){
+    modalReport = r;
     $('mGroup').textContent = r.group;
     const parts = [];
     if (r.room) parts.push('Room ' + r.room);
     if (r.ref) parts.push(r.ref);
     parts.push(fmt(r.submittedAt));
     $('mMeta').textContent = parts.join(' · ');
+    renderModalMission();
     const box = $('mFields');
     box.innerHTML = '';
     recordFields(r).forEach((f) => {
@@ -352,6 +396,8 @@
   $('fromDt').addEventListener('change', render);
   $('toDt').addEventListener('change', render);
   $('clearFilter').addEventListener('click', () => { $('fromDt').value=''; $('toDt').value=''; render(); });
+  $('mmEn').addEventListener('click', () => setModalLang('en'));
+  $('mmId').addEventListener('click', () => setModalLang('id'));
   $('overlay').addEventListener('click', (e) => { if (e.target === $('overlay')) closeModal(); });
   document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeModal(); });
 
